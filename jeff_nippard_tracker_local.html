@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Programme Jeff Nippard - Tracker local</title>
+<style>
+:root {
+  --bg:#0f1115; --card:#171a21; --card2:#1f2430; --text:#eef2f7; --muted:#aab3c2;
+  --accent:#7CFC00; --line:#2c3342; --danger:#ff7a7a;
+}
+* { box-sizing:border-box; }
+body {
+  margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  background:var(--bg); color:var(--text);
+}
+header {
+  position:sticky; top:0; z-index:10; background:rgba(15,17,21,.96);
+  border-bottom:1px solid var(--line); padding:12px;
+  backdrop-filter: blur(10px);
+}
+h1 { margin:0 0 8px; font-size:1.05rem; }
+.topbar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+select, button, input, textarea {
+  font:inherit; border-radius:10px; border:1px solid var(--line);
+}
+select, button {
+  background:var(--card); color:var(--text); padding:10px 12px;
+}
+button.active { outline:2px solid var(--accent); }
+button.secondary { background:var(--card2); }
+button.danger { border-color:#6b2a2a; color:#ffd0d0; }
+.small { color:var(--muted); font-size:.86rem; }
+.tabs { display:flex; gap:8px; margin-top:10px; overflow:auto; padding-bottom:2px; }
+.tabs button { min-width:72px; }
+main { padding:12px; max-width:900px; margin:0 auto; }
+.card {
+  background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px; margin-bottom:12px;
+}
+.exercise-head { display:flex; justify-content:space-between; gap:10px; align-items:center; margin-bottom:10px; }
+.exercise-title { font-weight:700; line-height:1.2; }
+.badge {
+  background:var(--card2); color:var(--accent); border:1px solid #35532a;
+  padding:6px 10px; border-radius:999px; font-size:.82rem; white-space:nowrap;
+}
+.set-grid {
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(95px,1fr)); gap:8px; margin-bottom:10px;
+}
+.set-box {
+  background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:8px;
+}
+.set-box label { display:block; font-size:.78rem; color:var(--muted); margin-bottom:6px; }
+.set-box input {
+  width:100%; background:#0c0f15; color:var(--text); padding:10px; border:1px solid #394155;
+}
+.notes {
+  width:100%; min-height:64px; resize:vertical; background:#0c0f15; color:var(--text);
+  padding:10px; border:1px solid #394155; border-radius:12px;
+}
+.footer-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+.notice {
+  background:#162015; border:1px solid #2f4c2c; color:#d6ffd0; border-radius:12px; padding:10px 12px; margin-bottom:12px;
+}
+.stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
+.stat {
+  background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px;
+}
+.stat .label { color:var(--muted); font-size:.8rem; }
+.stat .value { font-size:1.1rem; font-weight:700; margin-top:4px; }
+@media (max-width:560px) {
+  .stats { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Tracker local - Jeff Nippard High Frequency Full Body</h1>
+  <div class="topbar">
+    <select id="weekSelect"></select>
+    <button class="secondary" id="exportBtn">Exporter mes données</button>
+    <button class="secondary" id="importBtn">Importer</button>
+    <button class="danger" id="resetWeekBtn">Effacer la semaine</button>
+    <input id="importFile" type="file" accept=".json" style="display:none">
+  </div>
+  <div class="tabs" id="dayTabs"></div>
+</header>
+
+<main>
+  <div class="notice">Tout est sauvegardé automatiquement en local sur cet appareil. Tu peux remplir uniquement les charges. Les séries inutiles sont masquées automatiquement.</div>
+  <div class="stats">
+    <div class="stat"><div class="label">Semaine</div><div class="value" id="statWeek">-</div></div>
+    <div class="stat"><div class="label">Jour</div><div class="value" id="statDay">-</div></div>
+    <div class="stat"><div class="label">Exercices</div><div class="value" id="statCount">-</div></div>
+  </div>
+  <div id="app"></div>
+  <div class="footer-actions">
+    <button class="secondary" id="copySummaryBtn">Copier le résumé du jour</button>
+  </div>
+</main>
+
+<script>
+const PROGRAM = {"Week 1": {"Day 1": [{"exercise": "Back Squat", "sets": 4}, {"exercise": "Dumbbell Incline Press", "sets": 3}, {"exercise": "Lying Leg Curl", "sets": 3}, {"exercise": "Pronated Pulldown", "sets": 3}, {"exercise": "Supinated EZ Bar Curl", "sets": 3}, {"exercise": "Hanging Leg Raise", "sets": 3}], "Day 2": [{"exercise": "Barbell Bench Press", "sets": 3}, {"exercise": "Low to High Cable Flye", "sets": 3}, {"exercise": "Barbell Hip Thrust / Romanian Deadlift", "sets": 3}, {"exercise": "Chest-Supported T-Bar Row", "sets": 3}, {"exercise": "Arnold Press", "sets": 3}, {"exercise": "Tricep Pressdown", "sets": 3}, {"exercise": "Hex Bar / Smith Machine Shrug", "sets": 3}], "Day 3": [{"exercise": "Weighted Pull-Up", "sets": 3}, {"exercise": "Humble Row", "sets": 3}, {"exercise": "Leg Press", "sets": 3}, {"exercise": "Standing Calf Raise", "sets": 4}, {"exercise": "Cable Rope Upright Row", "sets": 3}, {"exercise": "Hammer Curl", "sets": 3}], "Day 4": [{"exercise": "Deadlift", "sets": 4}, {"exercise": "Dip", "sets": 3}, {"exercise": "Glute Ham Raise", "sets": 3}, {"exercise": "Leg Extension", "sets": 3}, {"exercise": "Cable Pull-Over", "sets": 3}, {"exercise": "Dumbbell Lateral Raise", "sets": 3}, {"exercise": "Rope Face Pull", "sets": 3}, {"exercise": "EZ Bar Skull Crusher", "sets": 3}], "Day 5": [{"exercise": "Overhead Press", "sets": 4}, {"exercise": "Egyptian Lateral Raise", "sets": 3}, {"exercise": "Cable Seated Row", "sets": 3}, {"exercise": "Seated Hip Abduction", "sets": 3}, {"exercise": "Incline Dumbbell Curl", "sets": 2}, {"exercise": "Bicycle Crunch", "sets": 3}, {"exercise": "Standing Calf Raise", "sets": 4}, {"exercise": "Push-Up", "sets": 2}]}, "Week 2": {"Day 1": [{"exercise": "Back Squat", "sets": 3}, {"exercise": "Dumbbell Incline Press", "sets": 3}, {"exercise": "Lying Leg Curl", "sets": 3}, {"exercise": "Pronated Pulldown", "sets": 3}, {"exercise": "Supinated EZ Bar Curl", "sets": 3}, {"exercise": "Hanging Leg Raise", "sets": 3}], "Day 2": [{"exercise": "Barbell Bench Press", "sets": 3}, {"exercise": "Low to High Cable Flye", "sets": 3}, {"exercise": "Barbell Hip Thrust / Romanian Deadlift", "sets": 3}, {"exercise": "Chest-Supported T-Bar Row", "sets": 3}, {"exercise": "Arnold Press", "sets": 3}, {"exercise": "Tricep Pressdown", "sets": 3}, {"exercise": "Hex Bar / Smith Machine Shrug", "sets": 3}], "Day 3": [{"exercise": "Weighted Pull-Up", "sets": 3}, {"exercise": "Humble Row", "sets": 3}, {"exercise": "Leg Press", "sets": 3}, {"exercise": "Standing Calf Raise", "sets": 4}, {"exercise": "Cable Rope Upright Row", "sets": 3}, {"exercise": "Hammer Curl", "sets": 3}], "Day 4": [{"exercise": "Reset Deadlift", "sets": 3}, {"exercise": "Dip", "sets": 3}, {"exercise": "Glute Ham Raise", "sets": 3}, {"exercise": "Leg Extension", "sets": 3}, {"exercise": "Cable Pull-Over", "sets": 3}, {"exercise": "Dumbbell Lateral Raise", "sets": 3}, {"exercise": "Rope Face Pull", "sets": 3}, {"exercise": "EZ Bar Skull Crusher", "sets": 3}], "Day 5": [{"exercise": "Overhead Press", "sets": 4}, {"exercise": "Egyptian Lateral Raise", "sets": 3}, {"exercise": "Cable Seated Row", "sets": 3}, {"exercise": "Seated Hip Abduction", "sets": 3}, {"exercise": "Incline Dumbbell Curl", "sets": 2}, {"exercise": "Bicycle Crunch", "sets": 3}, {"exercise": "Standing Calf Raise", "sets": 4}, {"exercise": "Push-Up", "sets": 2}]}, "Week 3": {"Day 1": [{"exercise": "Back Squat", "sets": 4}, {"exercise": "Dumbbell Incline Press", "sets": 3}, {"exercise": "Lying Leg Curl", "sets": 3}, {"exercise": "Pronated Pulldown", "sets": 3}, {"exercise": "Supinated EZ Bar Curl", "sets": 3}, {"exercise": "Hanging Leg Raise", "sets": 3}], "Day 2": [{"exercise": "Barbell Bench Press", "sets": 3}, {"exercise": "Low to High Cable Flye", "sets": 3}, {"exercise": "Barbell Hip Thrust / Romanian Deadlift", "sets": 3}, {"exercise": "Chest-Supported T-Bar Row", "sets": 3}, {"exercise": "Arnold Press", "sets": 3}, {"exercise": "Tricep Pressdown", "sets": 3}, {"exercise": "Hex Bar / Smith Machine Shrug", "sets": 3}], "Day 3": [{"exercise": "Weighted Pull-Up", "sets": 3}, {"exercise": "Humble Row", "sets": 3}, {"exercise": "Leg Press", "sets": 3}, {"exercise": "Standing Calf Raise", "sets": 4}, {"exercise": "Cable Rope Upright Row", "sets": 3}, {"exercise": "Hammer Curl", "sets": 3}], "Day 4": [{"exercise": "Deadlift", "sets": 4}, {"exercise": "Dip", "sets": 3}, {"exercise": "Glute Ham Raise", "sets": 3}, {"exercise": "Leg Extension", "sets": 3}, {"exercise": "Cable Pull-Over", "sets": 3}, {"exercise": "Dumbbell Lateral Raise", "sets": 3}, {"exercise": "Rope Face Pull", "sets": 3}, {"exercise": "EZ Bar Skull Crusher", "sets": 3}], "Day 5": [{"exercise": "Overhead Press", "sets": 4}, {"exercise": "Egyptian Lateral Raise", "sets": 3}, {"exercise": "Cable Seated Row", "sets": 3}, {"exercise": "Seated Hip Abduction", "sets": 3}, {"exercise": "Incline Dumbbell Curl", "sets": 2}, {"exercise": "Bicycle Crunch", "sets": 3}, {"exercise": "Standing Calf Raise", "sets": 4}, {"exercise": "Push-Up", "sets": 2}]}, "Week 4": {"Day 1": [{"exercise": "Back Squat", "sets": 3}, {"exercise": "Dumbbell Incline Press", "sets": 3}, {"exercise": "Lying Leg Curl", "sets": 3}, {"exercise": "Pronated Pulldown", "sets": 3}, {"exercise": "Supinated EZ Bar Curl", "sets": 3}, {"exercise": "Hanging Leg Raise", "sets": 3}], "Day 2": [{"exercise": "Barbell Bench Press", "sets": 3}, {"exercise": "Low to High Cable Flye", "sets": 3}, {"exercise": "Barbell Hip Thrust / Romanian Deadlift", "sets": 3}, {"exercise": "Chest-Supported T-Bar Row", "sets": 3}, {"exercise": "Arnold Press", "sets": 3}, {"exercise": "Tricep Pressdown", "sets": 3}, {"exercise": "Hex Bar / Smith Machine Shrug", "sets": 3}], "Day 3": [{"exercise": "Weighted Pull-Up", "sets": 3}, {"exercise": "Humble Row", "sets": 3}, {"exercise": "Leg Press", "sets": 3}, {"exercise": "Standing Calf Raise", "sets": 4}, {"exercise": "Cable Rope Upright Row", "sets": 3}, {"exercise": "Hammer Curl", "sets": 3}], "Day 4": [{"exercise": "Reset Deadlift", "sets": 3}, {"exercise": "Dip", "sets": 3}, {"exercise": "Glute Ham Raise", "sets": 3}, {"exercise": "Leg Extension", "sets": 3}, {"exercise": "Cable Pull-Over", "sets": 3}, {"exercise": "Dumbbell Lateral Raise", "sets": 3}, {"exercise": "Rope Face Pull", "sets": 3}, {"exercise": "EZ Bar Skull Crusher", "sets": 3}], "Day 5": [{"exercise": "Overhead Press", "sets": 4}, {"exercise": "Egyptian Lateral Raise", "sets": 3}, {"exercise": "Cable Seated Row", "sets": 3}, {"exercise": "Seated Hip Abduction", "sets": 3}, {"exercise": "Incline Dumbbell Curl", "sets": 2}, {"exercise": "Bicycle Crunch", "sets": 3}, {"exercise": "Standing Calf Raise", "sets": 4}, {"exercise": "Push-Up", "sets": 2}]}, "Week 5": {"Day 1": [{"exercise": "[Top Set] Back Squat", "sets": 1}, {"exercise": "[Back Off] Back Squat", "sets": 2}, {"exercise": "Barbell Overhead Press", "sets": 4}, {"exercise": "Swiss Ball Leg Curl", "sets": 3}, {"exercise": "Chin-Up", "sets": 4}, {"exercise": "Supinated EZ Bar Curl", "sets": 3}, {"exercise": "Ab Wheel Rollout", "sets": 3}], "Day 2": [{"exercise": "Barbell Bench Press", "sets": 3}, {"exercise": "Low Incline Dumbbell Press", "sets": 3}, {"exercise": "Barbell Hip Thrust / Romanian Deadlift", "sets": 4}, {"exercise": "Dumbbell Row", "sets": 4}, {"exercise": "Dumbbell Lateral Raise", "sets": 4}, {"exercise": "Overhead Tricep Extension", "sets": 3}, {"exercise": "Hex Bar / Smith Machine Shrug", "sets": 3}], "Day 3": [{"exercise": "Weighted Pull-Up", "sets": 3}, {"exercise": "Banded Chest-Supported T-Bar Row", "sets": 4}, {"exercise": "Single-Leg Leg Press", "sets": 4}, {"exercise": "Eccentric-Accentuated Standing Calf Raise", "sets": 4}, {"exercise": "Cable Rope Upright Row", "sets": 4}, {"exercise": "Cable Single-Arm Curl", "sets": 4}], "Day 4": [{"exercise": "[Top Set] Deadlift", "sets": 1}, {"exercise": "[Back Off] Reset Deadlift", "sets": 3}, {"exercise": "Decline Bench Press", "sets": 4}, {"exercise": "Glute Ham Raise", "sets": 4}, {"exercise": "Leg Extension", "sets": 4}, {"exercise": "Cable Pull-Over", "sets": 3}, {"exercise": "Dumbbell Lateral Raise", "sets": 3}, {"exercise": "EZ Bar Skull Crusher", "sets": 3}], "Day 5": [{"exercise": "Overhead Press", "sets": 3}, {"exercise": "Cable Lateral Raise", "sets": 3}, {"exercise": "Pendlay Row", "sets": 4}, {"exercise": "Seated Hip Abduction", "sets": 4}, {"exercise": "EZ Bar Curl 21s", "sets": 2}, {"exercise": "Cable Crunch", "sets": 4}, {"exercise": "Standing Calf Raise", "sets": 4}, {"exercise": "Push-Up", "sets": 2}]}, "Week 6": {"Day 1": [{"exercise": "[Top Set] Back Squat", "sets": 1}, {"exercise": "[Back Off] Back Squat", "sets": 2}, {"exercise": "Barbell Overhead Press", "sets": 4}, {"exercise": "Swiss Ball Leg Curl", "sets": 3}, {"exercise": "Chin-Up", "sets": 4}, {"exercise": "Supinated EZ Bar Curl", "sets": 3}, {"exercise": "Ab Wheel Rollout", "sets": 3}], "Day 2": [{"exercise": "Barbell Bench Press", "sets": 3}, {"exercise": "Low Incline Dumbbell Press", "sets": 3}, {"exercise": "Barbell Hip Thrust / Romanian Deadlift", "sets": 4}, {"exercise": "Dumbbell Row", "sets": 4}, {"exercise": "Dumbbell Lateral Raise", "sets": 4}, {"exercise": "Overhead Tricep Extension", "sets": 3}, {"exercise": "Hex Bar / Smith Machine Shrug", "sets": 3}], "Day 3": [{"exercise": "Weighted Pull-Up", "sets": 4}, {"exercise": "Banded Chest-Supported T-Bar Row", "sets": 4}, {"exercise": "Single-Leg Leg Press", "sets": 4}, {"exercise": "Eccentric-Accentuated Standing Calf Raise", "sets": 4}, {"exercise": "Cable Rope Upright Row", "sets": 4}, {"exercise": "Cable Single-Arm Curl", "sets": 4}], "Day 4": [{"exercise": "[Top Set] Deadlift", "sets": 1}, {"exercise": "[Back Off] Reset Deadlift", "sets": 3}, {"exercise": "Decline Bench Press", "sets": 4}, {"exercise": "Glute Ham Raise", "sets": 4}, {"exercise": "Leg Extension", "sets": 4}, {"exercise": "Cable Pull-Over", "sets": 3}, {"exercise": "Dumbbell Lateral Raise", "sets": 3}, {"exercise": "Reverse Pec Deck", "sets": 3}, {"exercise": "EZ Bar Skull Crusher", "sets": 3}], "Day 5": [{"exercise": "Overhead Press", "sets": 4}, {"exercise": "Cable Lateral Raise", "sets": 3}, {"exercise": "Pendlay Row", "sets": 4}, {"exercise": "Seated Hip Abduction", "sets": 4}, {"exercise": "EZ Bar Curl 21s", "sets": 2}, {"exercise": "Cable Crunch", "sets": 4}, {"exercise": "Standing Calf Raise", "sets": 4}, {"exercise": "Push-Up", "sets": 2}]}, "Week 7": {"Day 1": [{"exercise": "[Top Set] Back Squat", "sets": 1}, {"exercise": "[Back Off] Back Squat", "sets": 2}, {"exercise": "Barbell Overhead Press", "sets": 4}, {"exercise": "Swiss Ball Leg Curl", "sets": 3}, {"exercise": "Chin-Up", "sets": 4}, {"exercise": "Supinated EZ Bar Curl", "sets": 3}, {"exercise": "Ab Wheel Rollout", "sets": 3}], "Day 2": [{"exercise": "Barbell Bench Press", "sets": 3}, {"exercise": "Low Incline Dumbbell Press", "sets": 3}, {"exercise": "Barbell Hip Thrust / Romanian Deadlift", "sets": 4}, {"exercise": "Dumbbell Row", "sets": 4}, {"exercise": "Dumbbell Lateral Raise", "sets": 4}, {"exercise": "Overhead Tricep Extension", "sets": 3}, {"exercise": "Hex Bar / Smith Machine Shrug", "sets": 3}], "Day 3": [{"exercise": "Weighted Pull-Up", "sets": 3}, {"exercise": "Banded Chest-Supported T-Bar Row", "sets": 4}, {"exercise": "Single-Leg Leg Press", "sets": 4}, {"exercise": "Eccentric-Accentuated Standing Calf Raise", "sets": 4}, {"exercise": "Cable Rope Upright Row", "sets": 4}, {"exercise": "Cable Single-Arm Curl", "sets": 4}], "Day 4": [{"exercise": "[Top Set] Deadlift", "sets": 1}, {"exercise": "[Back Off] Reset Deadlift", "sets": 3}, {"exercise": "Decline Bench Press", "sets": 4}, {"exercise": "Glute Ham Raise", "sets": 4}, {"exercise": "Leg Extension", "sets": 4}, {"exercise": "Cable Pull-Over", "sets": 3}, {"exercise": "Dumbbell Lateral Raise", "sets": 3}, {"exercise": "Reverse Pec Deck", "sets": 3}, {"exercise": "EZ Bar Skull Crusher", "sets": 3}], "Day 5": [{"exercise": "Overhead Press", "sets": 4}, {"exercise": "Cable Lateral Raise", "sets": 3}, {"exercise": "Pendlay Row", "sets": 4}, {"exercise": "Seated Hip Abduction", "sets": 4}, {"exercise": "EZ Bar Curl 21s", "sets": 2}, {"exercise": "Cable Crunch", "sets": 4}, {"exercise": "Standing Calf Raise", "sets": 4}, {"exercise": "Push-Up", "sets": 2}]}, "Week 8": {"Day 1": [{"exercise": "[Top Set] Back Squat", "sets": 1}, {"exercise": "[Back Off] Back Squat", "sets": 2}, {"exercise": "Barbell Overhead Press", "sets": 4}, {"exercise": "Swiss Ball Leg Curl", "sets": 3}, {"exercise": "Chin-Up", "sets": 4}, {"exercise": "Supinated EZ Bar Curl", "sets": 3}, {"exercise": "Ab Wheel Rollout", "sets": 3}], "Day 2": [{"exercise": "Barbell Bench Press", "sets": 4}, {"exercise": "Low Incline Dumbbell Press", "sets": 3}, {"exercise": "Barbell Hip Thrust / Romanian Deadlift", "sets": 4}, {"exercise": "Dumbbell Row", "sets": 4}, {"exercise": "Dumbbell Lateral Raise", "sets": 4}, {"exercise": "Overhead Tricep Extension", "sets": 3}, {"exercise": "Hex Bar / Smith Machine Shrug", "sets": 3}], "Day 3": [{"exercise": "Weighted Pull-Up", "sets": 4}, {"exercise": "Banded Chest-Supported T-Bar Row", "sets": 4}, {"exercise": "Single-Leg Leg Press", "sets": 4}, {"exercise": "Eccentric-Accentuated Standing Calf Raise", "sets": 4}, {"exercise": "Cable Rope Upright Row", "sets": 4}, {"exercise": "Cable Single-Arm Curl", "sets": 4}], "Day 4": [{"exercise": "[Top Set] Deadlift", "sets": 1}, {"exercise": "[Back Off] Reset Deadlift", "sets": 1}, {"exercise": "Decline Bench Press", "sets": 4}, {"exercise": "Glute Ham Raise", "sets": 4}, {"exercise": "Leg Extension", "sets": 4}, {"exercise": "Cable Pull-Over", "sets": 3}, {"exercise": "Dumbbell Lateral Raise", "sets": 3}, {"exercise": "Reverse Pec Deck", "sets": 3}, {"exercise": "EZ Bar Skull Crusher", "sets": 3}], "Day 5": [{"exercise": "Overhead Press", "sets": 5}, {"exercise": "Cable Lateral Raise", "sets": 3}, {"exercise": "Pendlay Row", "sets": 4}, {"exercise": "Seated Hip Abduction", "sets": 4}, {"exercise": "EZ Bar Curl 21s", "sets": 2}, {"exercise": "Cable Crunch", "sets": 4}, {"exercise": "Standing Calf Raise", "sets": 4}, {"exercise": "Push-Up", "sets": 2}]}, "Week 9": {"Day 1": [{"exercise": "Back Squat", "sets": 4}, {"exercise": "Barbell Bench Press", "sets": 3}, {"exercise": "Lying Leg Curl", "sets": 3}, {"exercise": "Pronated Pulldown", "sets": 3}, {"exercise": "Supinated EZ Bar Curl", "sets": 3}, {"exercise": "Cable Crunch", "sets": 3}], "Day 2": [{"exercise": "Barbell Bench Press", "sets": 3}, {"exercise": "Low to High Cable Flye", "sets": 3}, {"exercise": "Deadlift", "sets": 3}, {"exercise": "Chest-Supported T-Bar Row", "sets": 3}, {"exercise": "Dumbbell Lateral Raise", "sets": 3}, {"exercise": "Tricep Pressdown", "sets": 3}, {"exercise": "Hex Bar / Smith Machine Shrug", "sets": 3}], "Day 3": [{"exercise": "Wide Grip Lat Pulldown", "sets": 3}, {"exercise": "Chest Supported T-Bar Row", "sets": 3}, {"exercise": "Leg Press", "sets": 3}, {"exercise": "Standing Calf Raise", "sets": 4}, {"exercise": "Cable Rope Upright Row", "sets": 3}, {"exercise": "Hammer Curl", "sets": 3}], "Day 4": [{"exercise": "Deadlift", "sets": 3}, {"exercise": "Decline Bench Press", "sets": 3}, {"exercise": "Glute Ham Raise", "sets": 3}, {"exercise": "Leg Extension", "sets": 3}, {"exercise": "Cable Pull-Over", "sets": 3}, {"exercise": "Dumbbell Lateral Raise", "sets": 3}, {"exercise": "Rope Face Pull", "sets": 3}, {"exercise": "EZ Bar Skull Crusher", "sets": 3}], "Day 5": [{"exercise": "Overhead Press", "sets": 4}, {"exercise": "Barbell Bench Press", "sets": 3}, {"exercise": "Cable Seated Row", "sets": 3}, {"exercise": "Seated Hip Abduction", "sets": 3}, {"exercise": "Incline Dumbbell Curl", "sets": 2}, {"exercise": "Bicycle Crunch", "sets": 3}, {"exercise": "Standing Calf Raise", "sets": 4}, {"exercise": "Push-Up", "sets": 2}]}, "Week 10": {"Day 1": [{"exercise": "[AMRAP] Back Squat", "sets": 1}, {"exercise": "Back Squat", "sets": 2}, {"exercise": "Dumbbell Incline Press", "sets": 3}, {"exercise": "Lying Leg Curl", "sets": 3}, {"exercise": "Pronated Pulldown", "sets": 3}, {"exercise": "Supinated EZ Bar Curl", "sets": 3}], "Day 2": [{"exercise": "[AMRAP Prep] Barbell Bench Press", "sets": 3}, {"exercise": "Low to High Cable Flye", "sets": 3}, {"exercise": "Barbell Hip Thrust / Romanian Deadlift", "sets": 3}, {"exercise": "Chest-Supported T-Bar Row", "sets": 3}, {"exercise": "Arnold Press", "sets": 3}, {"exercise": "Tricep Pressdown", "sets": 3}, {"exercise": "Hex Bar / Smith Machine Shrug", "sets": 3}], "Day 3": [{"exercise": "Weighted Pull-Up", "sets": 3}, {"exercise": "Humble Row", "sets": 3}, {"exercise": "Leg Press", "sets": 3}, {"exercise": "Standing Calf Raise", "sets": 4}, {"exercise": "Cable Rope Upright Row", "sets": 3}, {"exercise": "Hammer Curl", "sets": 3}], "Day 4": [{"exercise": "[AMRAP] Deadlift", "sets": 1}, {"exercise": "Deadlift", "sets": 2}, {"exercise": "Decline Bench Press", "sets": 3}, {"exercise": "Glute Ham Raise", "sets": 3}, {"exercise": "Leg Extension", "sets": 3}, {"exercise": "Cable Pull-Over", "sets": 3}, {"exercise": "Dumbbell Lateral Raise", "sets": 3}, {"exercise": "Rope Face Pull", "sets": 3}, {"exercise": "EZ Bar Skull Crusher", "sets": 3}], "Day 5": [{"exercise": "Overhead Press", "sets": 4}, {"exercise": "Egyptian Lateral Raise", "sets": 3}, {"exercise": "Cable Seated Row", "sets": 3}, {"exercise": "Seated Hip Abduction", "sets": 3}, {"exercise": "Incline Dumbbell Curl", "sets": 2}, {"exercise": "Bicycle Crunch", "sets": 3}, {"exercise": "Standing Calf Raise", "sets": 4}, {"exercise": "Push-Up", "sets": 2}]}};
+const STORAGE_KEY = "maxime_jeff_nippard_tracker_v1";
+
+function loadStore() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return {};
+  try { return JSON.parse(raw); } catch (e) { return {}; }
+}
+function saveStore(store) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+}
+let store = loadStore();
+let currentWeek = Object.keys(PROGRAM)[0];
+let currentDay = Object.keys(PROGRAM[currentWeek])[0];
+
+const weekSelect = document.getElementById("weekSelect");
+const dayTabs = document.getElementById("dayTabs");
+const app = document.getElementById("app");
+
+function getEntryKey(week, day, exIdx) {
+  return `${week}|||${day}|||${exIdx}`;
+}
+
+function initSelectors() {
+  weekSelect.innerHTML = "";
+  Object.keys(PROGRAM).forEach(week => {
+    const opt = document.createElement("option");
+    opt.value = week;
+    opt.textContent = week;
+    weekSelect.appendChild(opt);
+  });
+  weekSelect.value = currentWeek;
+  weekSelect.addEventListener("change", () => {
+    currentWeek = weekSelect.value;
+    currentDay = Object.keys(PROGRAM[currentWeek])[0];
+    render();
+  });
+}
+
+function renderTabs() {
+  dayTabs.innerHTML = "";
+  Object.keys(PROGRAM[currentWeek]).forEach(day => {
+    const btn = document.createElement("button");
+    btn.textContent = day;
+    if (day === currentDay) btn.classList.add("active");
+    btn.addEventListener("click", () => {
+      currentDay = day;
+      render();
+    });
+    dayTabs.appendChild(btn);
+  });
+}
+
+function renderCards() {
+  app.innerHTML = "";
+  const items = PROGRAM[currentWeek][currentDay];
+  document.getElementById("statWeek").textContent = currentWeek;
+  document.getElementById("statDay").textContent = currentDay;
+  document.getElementById("statCount").textContent = items.length;
+
+  items.forEach((item, exIdx) => {
+    const key = getEntryKey(currentWeek, currentDay, exIdx);
+    if (!store[key]) store[key] = {weights: Array(5).fill(""), notes:""};
+
+    const card = document.createElement("div");
+    card.className = "card";
+
+    const head = document.createElement("div");
+    head.className = "exercise-head";
+    head.innerHTML = `<div class="exercise-title">${item.exercise}</div><div class="badge">${item.sets} série${item.sets > 1 ? "s" : ""}</div>`;
+    card.appendChild(head);
+
+    const grid = document.createElement("div");
+    grid.className = "set-grid";
+
+    for (let i = 0; i < item.sets; i++) {
+      const box = document.createElement("div");
+      box.className = "set-box";
+      const value = store[key].weights[i] || "";
+      box.innerHTML = `<label>Série ${i+1}</label><input inputmode="decimal" placeholder="kg" value="${value}">`;
+      const input = box.querySelector("input");
+      input.addEventListener("input", (e) => {
+        store[key].weights[i] = e.target.value;
+        saveStore(store);
+      });
+      grid.appendChild(box);
+    }
+    card.appendChild(grid);
+
+    const notes = document.createElement("textarea");
+    notes.className = "notes";
+    notes.placeholder = "Notes optionnelles";
+    notes.value = store[key].notes || "";
+    notes.addEventListener("input", e => {
+      store[key].notes = e.target.value;
+      saveStore(store);
+    });
+    card.appendChild(notes);
+
+    app.appendChild(card);
+  });
+  saveStore(store);
+}
+
+function render() {
+  weekSelect.value = currentWeek;
+  renderTabs();
+  renderCards();
+}
+
+document.getElementById("resetWeekBtn").addEventListener("click", () => {
+  if (!confirm(`Effacer toutes les données de ${currentWeek} ?`)) return;
+  Object.keys(store).forEach(k => {
+    if (k.startsWith(currentWeek + "|||")) delete store[k];
+  });
+  saveStore(store);
+  render();
+});
+
+document.getElementById("exportBtn").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify(store, null, 2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "jeff_nippard_tracker_data.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+document.getElementById("importBtn").addEventListener("click", () => {
+  document.getElementById("importFile").click();
+});
+
+document.getElementById("importFile").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const text = await file.text();
+  try {
+    const imported = JSON.parse(text);
+    store = imported || {};
+    saveStore(store);
+    render();
+    alert("Import terminé.");
+  } catch {
+    alert("Fichier invalide.");
+  }
+});
+
+document.getElementById("copySummaryBtn").addEventListener("click", async () => {
+  const items = PROGRAM[currentWeek][currentDay];
+  const lines = [`${currentWeek} - ${currentDay}`];
+  items.forEach((item, exIdx) => {
+    const key = getEntryKey(currentWeek, currentDay, exIdx);
+    const vals = (store[key]?.weights || []).slice(0, item.sets).filter(v => String(v).trim() !== "");
+    const note = store[key]?.notes?.trim();
+    lines.push(`- ${item.exercise} (${item.sets} séries) : ${vals.join(" / ") || "vide"}${note ? " | Note: " + note : ""}`);
+  });
+  try {
+    await navigator.clipboard.writeText(lines.join("\n"));
+    alert("Résumé copié.");
+  } catch {
+    alert("Impossible de copier automatiquement sur cet appareil.");
+  }
+});
+
+initSelectors();
+render();
+</script>
+</body>
+</html>
