@@ -1,270 +1,1214 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Programme Jeff Nippard - Tracker local</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Nippard Full Body HF</title>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
 :root {
-  --bg:#0f1115; --card:#171a21; --card2:#1f2430; --text:#eef2f7; --muted:#aab3c2;
-  --accent:#7CFC00; --line:#2c3342; --danger:#ff7a7a;
+  --bg: #0a0a0f;
+  --card: #13131c;
+  --card2: #1a1a28;
+  --border: #2a2a3d;
+  --accent: #ff6b35;
+  --accent2: #ff8f65;
+  --green: #34d399;
+  --blue: #60a5fa;
+  --purple: #a78bfa;
+  --text: #e8e6f0;
+  --text2: #9896a8;
+  --text3: #6b6980;
+  --danger: #f87171;
+  --radius: 14px;
 }
-* { box-sizing:border-box; }
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html { background:var(--bg); }
 body {
-  margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-  background:var(--bg); color:var(--text);
+  font-family:'Space Grotesk',system-ui,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  padding-bottom:env(safe-area-inset-bottom,20px);
+  overflow-x:hidden;
 }
-header {
-  position:sticky; top:0; z-index:10; background:rgba(15,17,21,.96);
-  border-bottom:1px solid var(--line); padding:12px;
-  backdrop-filter: blur(10px);
+
+/* HEADER */
+.app-header {
+  position:sticky; top:0; z-index:100;
+  background:rgba(10,10,15,.92);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  padding:12px 16px;
+  padding-top:max(12px,env(safe-area-inset-top));
 }
-h1 { margin:0 0 8px; font-size:1.05rem; }
-.topbar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-select, button, input, textarea {
-  font:inherit; border-radius:10px; border:1px solid var(--line);
+.app-header h1 {
+  font-size:15px; font-weight:700; letter-spacing:.5px;
+  color:var(--accent);
+  text-transform:uppercase;
 }
-select, button {
-  background:var(--card); color:var(--text); padding:10px 12px;
+.app-header .sub { font-size:12px; color:var(--text2); margin-top:2px; }
+
+/* WEEK/DAY SELECTORS */
+.selector-row {
+  display:flex; gap:8px; padding:12px 16px;
+  overflow-x:auto; scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
 }
-button.active { outline:2px solid var(--accent); }
-button.secondary { background:var(--card2); }
-button.danger { border-color:#6b2a2a; color:#ffd0d0; }
-.small { color:var(--muted); font-size:.86rem; }
-.tabs { display:flex; gap:8px; margin-top:10px; overflow:auto; padding-bottom:2px; }
-.tabs button { min-width:72px; }
-main { padding:12px; max-width:900px; margin:0 auto; }
-.card {
-  background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px; margin-bottom:12px;
+.selector-row::-webkit-scrollbar { display:none; }
+.sel-btn {
+  flex-shrink:0;
+  padding:8px 14px;
+  border-radius:10px;
+  border:1.5px solid var(--border);
+  background:var(--card);
+  color:var(--text2);
+  font-family:inherit;
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+  transition:all .2s;
+  white-space:nowrap;
 }
-.exercise-head { display:flex; justify-content:space-between; gap:10px; align-items:center; margin-bottom:10px; }
-.exercise-title { font-weight:700; line-height:1.2; }
-.badge {
-  background:var(--card2); color:var(--accent); border:1px solid #35532a;
-  padding:6px 10px; border-radius:999px; font-size:.82rem; white-space:nowrap;
+.sel-btn.active {
+  background:var(--accent);
+  color:#fff;
+  border-color:var(--accent);
+  box-shadow:0 2px 12px rgba(255,107,53,.3);
 }
-.set-grid {
-  display:grid; grid-template-columns:repeat(auto-fit,minmax(95px,1fr)); gap:8px; margin-bottom:10px;
+.sel-btn.done {
+  border-color:var(--green);
+  color:var(--green);
 }
-.set-box {
-  background:var(--card2); border:1px solid var(--line); border-radius:12px; padding:8px;
+.sel-btn.done.active {
+  background:var(--green);
+  color:#fff;
+  border-color:var(--green);
+  box-shadow:0 2px 12px rgba(52,211,153,.3);
 }
-.set-box label { display:block; font-size:.78rem; color:var(--muted); margin-bottom:6px; }
-.set-box input {
-  width:100%; background:#0c0f15; color:var(--text); padding:10px; border:1px solid #394155;
+
+.section-label {
+  padding:4px 16px 6px;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:1.5px;
+  color:var(--text3);
+  font-weight:600;
 }
-.notes {
-  width:100%; min-height:64px; resize:vertical; background:#0c0f15; color:var(--text);
-  padding:10px; border:1px solid #394155; border-radius:12px;
+
+/* EXERCISE CARDS */
+.exercises { padding:0 12px 24px; }
+.ex-card {
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  margin-bottom:10px;
+  overflow:hidden;
+  transition:border-color .2s;
 }
-.footer-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
-.notice {
-  background:#162015; border:1px solid #2f4c2c; color:#d6ffd0; border-radius:12px; padding:10px 12px; margin-bottom:12px;
+.ex-card.completed { border-color:var(--green); }
+.ex-header {
+  display:flex; align-items:flex-start; gap:10px;
+  padding:14px 14px 10px;
+  cursor:pointer;
 }
-.stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
-.stat {
-  background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px;
+.ex-num {
+  flex-shrink:0;
+  width:28px; height:28px;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--card2);
+  border-radius:8px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px; font-weight:600;
+  color:var(--accent);
 }
-.stat .label { color:var(--muted); font-size:.8rem; }
-.stat .value { font-size:1.1rem; font-weight:700; margin-top:4px; }
-@media (max-width:560px) {
-  .stats { grid-template-columns:1fr; }
+.ex-card.completed .ex-num { background:var(--green); color:#fff; }
+.ex-info { flex:1; min-width:0; }
+.ex-name {
+  font-size:14px; font-weight:700;
+  line-height:1.3;
+  text-transform:uppercase;
+  letter-spacing:.3px;
+}
+.ex-meta {
+  display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;
+}
+.ex-tag {
+  font-size:11px;
+  padding:3px 8px;
+  border-radius:6px;
+  font-weight:600;
+  font-family:'JetBrains Mono',monospace;
+}
+.tag-sets { background:rgba(96,165,250,.15); color:var(--blue); }
+.tag-reps { background:rgba(167,139,250,.15); color:var(--purple); }
+.tag-rpe { background:rgba(255,107,53,.15); color:var(--accent2); }
+.tag-rest { background:rgba(52,211,153,.1); color:var(--green); }
+
+.ex-note {
+  padding:0 14px 10px;
+  font-size:12px;
+  color:var(--text3);
+  line-height:1.4;
+  display:none;
+}
+.ex-card.open .ex-note { display:block; }
+
+/* SET ROWS */
+.sets-area {
+  padding:0 14px 14px;
+  display:none;
+}
+.ex-card.open .sets-area { display:block; }
+.set-row {
+  display:grid;
+  grid-template-columns:32px 1fr 1fr 40px;
+  gap:8px;
+  align-items:center;
+  margin-bottom:6px;
+}
+.set-label {
+  font-size:11px; font-weight:600;
+  color:var(--text3);
+  text-align:center;
+  font-family:'JetBrains Mono',monospace;
+}
+.set-input {
+  width:100%;
+  padding:10px 8px;
+  border-radius:8px;
+  border:1.5px solid var(--border);
+  background:var(--card2);
+  color:var(--text);
+  font-family:'JetBrains Mono',monospace;
+  font-size:14px;
+  text-align:center;
+  outline:none;
+  transition:border-color .2s;
+  -webkit-appearance:none;
+}
+.set-input:focus { border-color:var(--accent); }
+.set-input::placeholder { color:var(--text3); font-size:11px; }
+.set-check {
+  width:36px; height:36px;
+  border-radius:8px;
+  border:1.5px solid var(--border);
+  background:var(--card2);
+  color:var(--text3);
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer;
+  font-size:16px;
+  transition:all .2s;
+}
+.set-check.done {
+  background:var(--green);
+  border-color:var(--green);
+  color:#fff;
+}
+.sets-header {
+  display:grid;
+  grid-template-columns:32px 1fr 1fr 40px;
+  gap:8px;
+  margin-bottom:8px;
+  padding-bottom:6px;
+  border-bottom:1px solid var(--border);
+}
+.sets-header span {
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  color:var(--text3);
+  text-align:center;
+  font-weight:600;
+}
+
+/* TIMER */
+.timer-bar {
+  position:fixed;
+  bottom:0;
+  left:0; right:0;
+  z-index:200;
+  background:rgba(13,13,28,.96);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border-top:1px solid var(--border);
+  padding:12px 16px;
+  padding-bottom:max(12px,env(safe-area-inset-bottom));
+  display:flex;
+  align-items:center;
+  gap:12px;
+  transform:translateY(100%);
+  transition:transform .3s cubic-bezier(.22,1,.36,1);
+}
+.timer-bar.visible { transform:translateY(0); }
+.timer-display {
+  font-family:'JetBrains Mono',monospace;
+  font-size:32px;
+  font-weight:700;
+  color:var(--accent);
+  min-width:100px;
+  letter-spacing:1px;
+}
+.timer-display.done-color { color:var(--green); }
+.timer-controls { display:flex; gap:8px; flex:1; justify-content:flex-end; }
+.timer-btn {
+  padding:10px 18px;
+  border-radius:10px;
+  border:none;
+  font-family:inherit;
+  font-size:13px;
+  font-weight:700;
+  cursor:pointer;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+}
+.btn-start { background:var(--accent); color:#fff; }
+.btn-stop { background:var(--danger); color:#fff; }
+.btn-reset { background:var(--card2); color:var(--text2); border:1.5px solid var(--border); }
+.timer-label {
+  font-size:11px;
+  color:var(--text3);
+  text-align:center;
+}
+
+/* TIMER PRESETS */
+.timer-presets {
+  display:flex; gap:6px; flex-wrap:wrap;
+}
+.preset-btn {
+  padding:6px 12px;
+  border-radius:8px;
+  border:1.5px solid var(--border);
+  background:var(--card2);
+  color:var(--text2);
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;
+  font-weight:600;
+  cursor:pointer;
+}
+.preset-btn.active { border-color:var(--accent); color:var(--accent); }
+
+/* FAB */
+.timer-fab {
+  position:fixed;
+  bottom:20px;
+  right:16px;
+  z-index:150;
+  width:56px; height:56px;
+  border-radius:16px;
+  background:var(--accent);
+  color:#fff;
+  border:none;
+  font-size:22px;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 4px 20px rgba(255,107,53,.4);
+  cursor:pointer;
+  padding-bottom:env(safe-area-inset-bottom,0);
+}
+
+/* PROGRESS BAR */
+.progress-wrap {
+  padding:8px 16px 4px;
+}
+.progress-outer {
+  height:4px;
+  background:var(--card2);
+  border-radius:2px;
+  overflow:hidden;
+}
+.progress-inner {
+  height:100%;
+  background:linear-gradient(90deg,var(--accent),var(--green));
+  border-radius:2px;
+  transition:width .4s;
+}
+.progress-text {
+  font-size:11px; color:var(--text3); margin-top:4px;
+  font-family:'JetBrains Mono',monospace;
+  text-align:right;
+}
+
+/* MARK DAY COMPLETE */
+.day-complete-btn {
+  display:block;
+  width:calc(100% - 24px);
+  margin:8px 12px 20px;
+  padding:14px;
+  border-radius:var(--radius);
+  border:2px dashed var(--border);
+  background:transparent;
+  color:var(--text2);
+  font-family:inherit;
+  font-size:14px;
+  font-weight:700;
+  cursor:pointer;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  transition:all .2s;
+}
+.day-complete-btn.is-done {
+  border-style:solid;
+  border-color:var(--green);
+  color:var(--green);
+  background:rgba(52,211,153,.08);
+}
+
+/* RESPONSIVE */
+@media (max-width:390px) {
+  .ex-name { font-size:13px; }
+  .timer-display { font-size:28px; }
 }
 </style>
 </head>
 <body>
-<header>
-  <h1>Tracker local - Jeff Nippard High Frequency Full Body</h1>
-  <div class="topbar">
-    <select id="weekSelect"></select>
-    <button class="secondary" id="exportBtn">Exporter mes données</button>
-    <button class="secondary" id="importBtn">Importer</button>
-    <button class="danger" id="resetWeekBtn">Effacer la semaine</button>
-    <input id="importFile" type="file" accept=".json" style="display:none">
-  </div>
-  <div class="tabs" id="dayTabs"></div>
-</header>
 
-<main>
-  <div class="notice">Tout est sauvegardé automatiquement en local sur cet appareil. Tu peux remplir uniquement les charges. Les séries inutiles sont masquées automatiquement.</div>
-  <div class="stats">
-    <div class="stat"><div class="label">Semaine</div><div class="value" id="statWeek">-</div></div>
-    <div class="stat"><div class="label">Jour</div><div class="value" id="statDay">-</div></div>
-    <div class="stat"><div class="label">Exercices</div><div class="value" id="statCount">-</div></div>
+<div class="app-header">
+  <h1>Perek Maxime — Full Body x5</h1>
+  <div class="sub" id="weekLabel">Programme 10 semaines • 5 jours/sem</div>
+</div>
+
+<div class="section-label">Semaine</div>
+<div class="selector-row" id="weekSelector"></div>
+
+<div class="section-label">Jour</div>
+<div class="selector-row" id="daySelector"></div>
+
+<div class="progress-wrap">
+  <div class="progress-outer"><div class="progress-inner" id="progressBar" style="width:0%"></div></div>
+  <div class="progress-text" id="progressText">0 / 0 séries</div>
+</div>
+
+<div class="exercises" id="exerciseList"></div>
+
+<button class="day-complete-btn" id="dayCompleteBtn" onclick="toggleDayComplete()">Marquer jour terminé ✓</button>
+
+<button class="timer-fab" id="timerFab" onclick="toggleTimer()">⏱</button>
+
+<div class="timer-bar" id="timerBar">
+  <div>
+    <div class="timer-display" id="timerDisplay">0:00</div>
+    <div class="timer-label" id="timerLabel">Repos</div>
   </div>
-  <div id="app"></div>
-  <div class="footer-actions">
-    <button class="secondary" id="copySummaryBtn">Copier le résumé du jour</button>
+  <div style="flex:1">
+    <div class="timer-presets" id="timerPresets">
+      <button class="preset-btn" onclick="setTimer(60)">1:00</button>
+      <button class="preset-btn" onclick="setTimer(90)">1:30</button>
+      <button class="preset-btn active" onclick="setTimer(120)">2:00</button>
+      <button class="preset-btn" onclick="setTimer(180)">3:00</button>
+      <button class="preset-btn" onclick="setTimer(240)">4:00</button>
+    </div>
+    <div class="timer-controls" style="margin-top:8px">
+      <button class="timer-btn btn-reset" onclick="resetTimer()">Reset</button>
+      <button class="timer-btn btn-start" id="timerStartBtn" onclick="startTimer()">Start</button>
+    </div>
   </div>
-</main>
+</div>
 
 <script>
-const PROGRAM = {"Week 1": {"Day 1": [{"exercise": "Back Squat", "sets": 4}, {"exercise": "Dumbbell Incline Press", "sets": 3}, {"exercise": "Lying Leg Curl", "sets": 3}, {"exercise": "Pronated Pulldown", "sets": 3}, {"exercise": "Supinated EZ Bar Curl", "sets": 3}, {"exercise": "Hanging Leg Raise", "sets": 3}], "Day 2": [{"exercise": "Barbell Bench Press", "sets": 3}, {"exercise": "Low to High Cable Flye", "sets": 3}, {"exercise": "Barbell Hip Thrust / Romanian Deadlift", "sets": 3}, {"exercise": "Chest-Supported T-Bar Row", "sets": 3}, {"exercise": "Arnold Press", "sets": 3}, {"exercise": "Tricep Pressdown", "sets": 3}, {"exercise": "Hex Bar / Smith Machine Shrug", "sets": 3}], "Day 3": [{"exercise": "Weighted Pull-Up", "sets": 3}, {"exercise": "Humble Row", "sets": 3}, {"exercise": "Leg Press", "sets": 3}, {"exercise": "Standing Calf Raise", "sets": 4}, {"exercise": "Cable Rope Upright Row", "sets": 3}, {"exercise": "Hammer Curl", "sets": 3}], "Day 4": [{"exercise": "Deadlift", "sets": 4}, {"exercise": "Dip", "sets": 3}, {"exercise": "Glute Ham Raise", "sets": 3}, {"exercise": "Leg Extension", "sets": 3}, {"exercise": "Cable Pull-Over", "sets": 3}, {"exercise": "Dumbbell Lateral Raise", "sets": 3}, {"exercise": "Rope Face Pull", "sets": 3}, {"exercise": "EZ Bar Skull Crusher", "sets": 3}], "Day 5": [{"exercise": "Overhead Press", "sets": 4}, {"exercise": "Egyptian Lateral Raise", "sets": 3}, {"exercise": "Cable Seated Row", "sets": 3}, {"exercise": "Seated Hip Abduction", "sets": 3}, {"exercise": "Incline Dumbbell Curl", "sets": 2}, {"exercise": "Bicycle Crunch", "sets": 3}, {"exercise": "Standing Calf Raise", "sets": 4}, {"exercise": "Push-Up", "sets": 2}]}, "Week 2": {"Day 1": [{"exercise": "Back Squat", "sets": 3}, {"exercise": "Dumbbell Incline Press", "sets": 3}, {"exercise": "Lying Leg Curl", "sets": 3}, {"exercise": "Pronated Pulldown", "sets": 3}, {"exercise": "Supinated EZ Bar Curl", "sets": 3}, {"exercise": "Hanging Leg Raise", "sets": 3}], "Day 2": [{"exercise": "Barbell Bench Press", "sets": 3}, {"exercise": "Low to High Cable Flye", "sets": 3}, {"exercise": "Barbell Hip Thrust / Romanian Deadlift", "sets": 3}, {"exercise": "Chest-Supported T-Bar Row", "sets": 3}, {"exercise": "Arnold Press", "sets": 3}, {"exercise": "Tricep Pressdown", "sets": 3}, {"exercise": "Hex Bar / Smith Machine Shrug", "sets": 3}], "Day 3": [{"exercise": "Weighted Pull-Up", "sets": 3}, {"exercise": "Humble Row", "sets": 3}, {"exercise": "Leg Press", "sets": 3}, {"exercise": "Standing Calf Raise", "sets": 4}, {"exercise": "Cable Rope Upright Row", "sets": 3}, {"exercise": "Hammer Curl", "sets": 3}], "Day 4": [{"exercise": "Reset Deadlift", "sets": 3}, {"exercise": "Dip", "sets": 3}, {"exercise": "Glute Ham Raise", "sets": 3}, {"exercise": "Leg Extension", "sets": 3}, {"exercise": "Cable Pull-Over", "sets": 3}, {"exercise": "Dumbbell Lateral Raise", "sets": 3}, {"exercise": "Rope Face Pull", "sets": 3}, {"exercise": "EZ Bar Skull Crusher", "sets": 3}], "Day 5": [{"exercise": "Overhead Press", "sets": 4}, {"exercise": "Egyptian Lateral Raise", "sets": 3}, {"exercise": "Cable Seated Row", "sets": 3}, {"exercise": "Seated Hip Abduction", "sets": 3}, {"exercise": "Incline Dumbbell Curl", "sets": 2}, {"exercise": "Bicycle Crunch", "sets": 3}, {"exercise": "Standing Calf Raise", "sets": 4}, {"exercise": "Push-Up", "sets": 2}]}, "Week 3": {"Day 1": [{"exercise": "Back Squat", "sets": 4}, {"exercise": "Dumbbell Incline Press", "sets": 3}, {"exercise": "Lying Leg Curl", "sets": 3}, {"exercise": "Pronated Pulldown", "sets": 3}, {"exercise": "Supinated EZ Bar Curl", "sets": 3}, {"exercise": "Hanging Leg Raise", "sets": 3}], "Day 2": [{"exercise": "Barbell Bench Press", "sets": 3}, {"exercise": "Low to High Cable Flye", "sets": 3}, {"exercise": "Barbell Hip Thrust / Romanian Deadlift", "sets": 3}, {"exercise": "Chest-Supported T-Bar Row", "sets": 3}, {"exercise": "Arnold Press", "sets": 3}, {"exercise": "Tricep Pressdown", "sets": 3}, {"exercise": "Hex Bar / Smith Machine Shrug", "sets": 3}], "Day 3": [{"exercise": "Weighted Pull-Up", "sets": 3}, {"exercise": "Humble Row", "sets": 3}, {"exercise": "Leg Press", "sets": 3}, {"exercise": "Standing Calf Raise", "sets": 4}, {"exercise": "Cable Rope Upright Row", "sets": 3}, {"exercise": "Hammer Curl", "sets": 3}], "Day 4": [{"exercise": "Deadlift", "sets": 4}, {"exercise": "Dip", "sets": 3}, {"exercise": "Glute Ham Raise", "sets": 3}, {"exercise": "Leg Extension", "sets": 3}, {"exercise": "Cable Pull-Over", "sets": 3}, {"exercise": "Dumbbell Lateral Raise", "sets": 3}, {"exercise": "Rope Face Pull", "sets": 3}, {"exercise": "EZ Bar Skull Crusher", "sets": 3}], "Day 5": [{"exercise": "Overhead Press", "sets": 4}, {"exercise": "Egyptian Lateral Raise", "sets": 3}, {"exercise": "Cable Seated Row", "sets": 3}, {"exercise": "Seated Hip Abduction", "sets": 3}, {"exercise": "Incline Dumbbell Curl", "sets": 2}, {"exercise": "Bicycle Crunch", "sets": 3}, {"exercise": "Standing Calf Raise", "sets": 4}, {"exercise": "Push-Up", "sets": 2}]}, "Week 4": {"Day 1": [{"exercise": "Back Squat", "sets": 3}, {"exercise": "Dumbbell Incline Press", "sets": 3}, {"exercise": "Lying Leg Curl", "sets": 3}, {"exercise": "Pronated Pulldown", "sets": 3}, {"exercise": "Supinated EZ Bar Curl", "sets": 3}, {"exercise": "Hanging Leg Raise", "sets": 3}], "Day 2": [{"exercise": "Barbell Bench Press", "sets": 3}, {"exercise": "Low to High Cable Flye", "sets": 3}, {"exercise": "Barbell Hip Thrust / Romanian Deadlift", "sets": 3}, {"exercise": "Chest-Supported T-Bar Row", "sets": 3}, {"exercise": "Arnold Press", "sets": 3}, {"exercise": "Tricep Pressdown", "sets": 3}, {"exercise": "Hex Bar / Smith Machine Shrug", "sets": 3}], "Day 3": [{"exercise": "Weighted Pull-Up", "sets": 3}, {"exercise": "Humble Row", "sets": 3}, {"exercise": "Leg Press", "sets": 3}, {"exercise": "Standing Calf Raise", "sets": 4}, {"exercise": "Cable Rope Upright Row", "sets": 3}, {"exercise": "Hammer Curl", "sets": 3}], "Day 4": [{"exercise": "Reset Deadlift", "sets": 3}, {"exercise": "Dip", "sets": 3}, {"exercise": "Glute Ham Raise", "sets": 3}, {"exercise": "Leg Extension", "sets": 3}, {"exercise": "Cable Pull-Over", "sets": 3}, {"exercise": "Dumbbell Lateral Raise", "sets": 3}, {"exercise": "Rope Face Pull", "sets": 3}, {"exercise": "EZ Bar Skull Crusher", "sets": 3}], "Day 5": [{"exercise": "Overhead Press", "sets": 4}, {"exercise": "Egyptian Lateral Raise", "sets": 3}, {"exercise": "Cable Seated Row", "sets": 3}, {"exercise": "Seated Hip Abduction", "sets": 3}, {"exercise": "Incline Dumbbell Curl", "sets": 2}, {"exercise": "Bicycle Crunch", "sets": 3}, {"exercise": "Standing Calf Raise", "sets": 4}, {"exercise": "Push-Up", "sets": 2}]}, "Week 5": {"Day 1": [{"exercise": "[Top Set] Back Squat", "sets": 1}, {"exercise": "[Back Off] Back Squat", "sets": 2}, {"exercise": "Barbell Overhead Press", "sets": 4}, {"exercise": "Swiss Ball Leg Curl", "sets": 3}, {"exercise": "Chin-Up", "sets": 4}, {"exercise": "Supinated EZ Bar Curl", "sets": 3}, {"exercise": "Ab Wheel Rollout", "sets": 3}], "Day 2": [{"exercise": "Barbell Bench Press", "sets": 3}, {"exercise": "Low Incline Dumbbell Press", "sets": 3}, {"exercise": "Barbell Hip Thrust / Romanian Deadlift", "sets": 4}, {"exercise": "Dumbbell Row", "sets": 4}, {"exercise": "Dumbbell Lateral Raise", "sets": 4}, {"exercise": "Overhead Tricep Extension", "sets": 3}, {"exercise": "Hex Bar / Smith Machine Shrug", "sets": 3}], "Day 3": [{"exercise": "Weighted Pull-Up", "sets": 3}, {"exercise": "Banded Chest-Supported T-Bar Row", "sets": 4}, {"exercise": "Single-Leg Leg Press", "sets": 4}, {"exercise": "Eccentric-Accentuated Standing Calf Raise", "sets": 4}, {"exercise": "Cable Rope Upright Row", "sets": 4}, {"exercise": "Cable Single-Arm Curl", "sets": 4}], "Day 4": [{"exercise": "[Top Set] Deadlift", "sets": 1}, {"exercise": "[Back Off] Reset Deadlift", "sets": 3}, {"exercise": "Decline Bench Press", "sets": 4}, {"exercise": "Glute Ham Raise", "sets": 4}, {"exercise": "Leg Extension", "sets": 4}, {"exercise": "Cable Pull-Over", "sets": 3}, {"exercise": "Dumbbell Lateral Raise", "sets": 3}, {"exercise": "EZ Bar Skull Crusher", "sets": 3}], "Day 5": [{"exercise": "Overhead Press", "sets": 3}, {"exercise": "Cable Lateral Raise", "sets": 3}, {"exercise": "Pendlay Row", "sets": 4}, {"exercise": "Seated Hip Abduction", "sets": 4}, {"exercise": "EZ Bar Curl 21s", "sets": 2}, {"exercise": "Cable Crunch", "sets": 4}, {"exercise": "Standing Calf Raise", "sets": 4}, {"exercise": "Push-Up", "sets": 2}]}, "Week 6": {"Day 1": [{"exercise": "[Top Set] Back Squat", "sets": 1}, {"exercise": "[Back Off] Back Squat", "sets": 2}, {"exercise": "Barbell Overhead Press", "sets": 4}, {"exercise": "Swiss Ball Leg Curl", "sets": 3}, {"exercise": "Chin-Up", "sets": 4}, {"exercise": "Supinated EZ Bar Curl", "sets": 3}, {"exercise": "Ab Wheel Rollout", "sets": 3}], "Day 2": [{"exercise": "Barbell Bench Press", "sets": 3}, {"exercise": "Low Incline Dumbbell Press", "sets": 3}, {"exercise": "Barbell Hip Thrust / Romanian Deadlift", "sets": 4}, {"exercise": "Dumbbell Row", "sets": 4}, {"exercise": "Dumbbell Lateral Raise", "sets": 4}, {"exercise": "Overhead Tricep Extension", "sets": 3}, {"exercise": "Hex Bar / Smith Machine Shrug", "sets": 3}], "Day 3": [{"exercise": "Weighted Pull-Up", "sets": 4}, {"exercise": "Banded Chest-Supported T-Bar Row", "sets": 4}, {"exercise": "Single-Leg Leg Press", "sets": 4}, {"exercise": "Eccentric-Accentuated Standing Calf Raise", "sets": 4}, {"exercise": "Cable Rope Upright Row", "sets": 4}, {"exercise": "Cable Single-Arm Curl", "sets": 4}], "Day 4": [{"exercise": "[Top Set] Deadlift", "sets": 1}, {"exercise": "[Back Off] Reset Deadlift", "sets": 3}, {"exercise": "Decline Bench Press", "sets": 4}, {"exercise": "Glute Ham Raise", "sets": 4}, {"exercise": "Leg Extension", "sets": 4}, {"exercise": "Cable Pull-Over", "sets": 3}, {"exercise": "Dumbbell Lateral Raise", "sets": 3}, {"exercise": "Reverse Pec Deck", "sets": 3}, {"exercise": "EZ Bar Skull Crusher", "sets": 3}], "Day 5": [{"exercise": "Overhead Press", "sets": 4}, {"exercise": "Cable Lateral Raise", "sets": 3}, {"exercise": "Pendlay Row", "sets": 4}, {"exercise": "Seated Hip Abduction", "sets": 4}, {"exercise": "EZ Bar Curl 21s", "sets": 2}, {"exercise": "Cable Crunch", "sets": 4}, {"exercise": "Standing Calf Raise", "sets": 4}, {"exercise": "Push-Up", "sets": 2}]}, "Week 7": {"Day 1": [{"exercise": "[Top Set] Back Squat", "sets": 1}, {"exercise": "[Back Off] Back Squat", "sets": 2}, {"exercise": "Barbell Overhead Press", "sets": 4}, {"exercise": "Swiss Ball Leg Curl", "sets": 3}, {"exercise": "Chin-Up", "sets": 4}, {"exercise": "Supinated EZ Bar Curl", "sets": 3}, {"exercise": "Ab Wheel Rollout", "sets": 3}], "Day 2": [{"exercise": "Barbell Bench Press", "sets": 3}, {"exercise": "Low Incline Dumbbell Press", "sets": 3}, {"exercise": "Barbell Hip Thrust / Romanian Deadlift", "sets": 4}, {"exercise": "Dumbbell Row", "sets": 4}, {"exercise": "Dumbbell Lateral Raise", "sets": 4}, {"exercise": "Overhead Tricep Extension", "sets": 3}, {"exercise": "Hex Bar / Smith Machine Shrug", "sets": 3}], "Day 3": [{"exercise": "Weighted Pull-Up", "sets": 3}, {"exercise": "Banded Chest-Supported T-Bar Row", "sets": 4}, {"exercise": "Single-Leg Leg Press", "sets": 4}, {"exercise": "Eccentric-Accentuated Standing Calf Raise", "sets": 4}, {"exercise": "Cable Rope Upright Row", "sets": 4}, {"exercise": "Cable Single-Arm Curl", "sets": 4}], "Day 4": [{"exercise": "[Top Set] Deadlift", "sets": 1}, {"exercise": "[Back Off] Reset Deadlift", "sets": 3}, {"exercise": "Decline Bench Press", "sets": 4}, {"exercise": "Glute Ham Raise", "sets": 4}, {"exercise": "Leg Extension", "sets": 4}, {"exercise": "Cable Pull-Over", "sets": 3}, {"exercise": "Dumbbell Lateral Raise", "sets": 3}, {"exercise": "Reverse Pec Deck", "sets": 3}, {"exercise": "EZ Bar Skull Crusher", "sets": 3}], "Day 5": [{"exercise": "Overhead Press", "sets": 4}, {"exercise": "Cable Lateral Raise", "sets": 3}, {"exercise": "Pendlay Row", "sets": 4}, {"exercise": "Seated Hip Abduction", "sets": 4}, {"exercise": "EZ Bar Curl 21s", "sets": 2}, {"exercise": "Cable Crunch", "sets": 4}, {"exercise": "Standing Calf Raise", "sets": 4}, {"exercise": "Push-Up", "sets": 2}]}, "Week 8": {"Day 1": [{"exercise": "[Top Set] Back Squat", "sets": 1}, {"exercise": "[Back Off] Back Squat", "sets": 2}, {"exercise": "Barbell Overhead Press", "sets": 4}, {"exercise": "Swiss Ball Leg Curl", "sets": 3}, {"exercise": "Chin-Up", "sets": 4}, {"exercise": "Supinated EZ Bar Curl", "sets": 3}, {"exercise": "Ab Wheel Rollout", "sets": 3}], "Day 2": [{"exercise": "Barbell Bench Press", "sets": 4}, {"exercise": "Low Incline Dumbbell Press", "sets": 3}, {"exercise": "Barbell Hip Thrust / Romanian Deadlift", "sets": 4}, {"exercise": "Dumbbell Row", "sets": 4}, {"exercise": "Dumbbell Lateral Raise", "sets": 4}, {"exercise": "Overhead Tricep Extension", "sets": 3}, {"exercise": "Hex Bar / Smith Machine Shrug", "sets": 3}], "Day 3": [{"exercise": "Weighted Pull-Up", "sets": 4}, {"exercise": "Banded Chest-Supported T-Bar Row", "sets": 4}, {"exercise": "Single-Leg Leg Press", "sets": 4}, {"exercise": "Eccentric-Accentuated Standing Calf Raise", "sets": 4}, {"exercise": "Cable Rope Upright Row", "sets": 4}, {"exercise": "Cable Single-Arm Curl", "sets": 4}], "Day 4": [{"exercise": "[Top Set] Deadlift", "sets": 1}, {"exercise": "[Back Off] Reset Deadlift", "sets": 1}, {"exercise": "Decline Bench Press", "sets": 4}, {"exercise": "Glute Ham Raise", "sets": 4}, {"exercise": "Leg Extension", "sets": 4}, {"exercise": "Cable Pull-Over", "sets": 3}, {"exercise": "Dumbbell Lateral Raise", "sets": 3}, {"exercise": "Reverse Pec Deck", "sets": 3}, {"exercise": "EZ Bar Skull Crusher", "sets": 3}], "Day 5": [{"exercise": "Overhead Press", "sets": 5}, {"exercise": "Cable Lateral Raise", "sets": 3}, {"exercise": "Pendlay Row", "sets": 4}, {"exercise": "Seated Hip Abduction", "sets": 4}, {"exercise": "EZ Bar Curl 21s", "sets": 2}, {"exercise": "Cable Crunch", "sets": 4}, {"exercise": "Standing Calf Raise", "sets": 4}, {"exercise": "Push-Up", "sets": 2}]}, "Week 9": {"Day 1": [{"exercise": "Back Squat", "sets": 4}, {"exercise": "Barbell Bench Press", "sets": 3}, {"exercise": "Lying Leg Curl", "sets": 3}, {"exercise": "Pronated Pulldown", "sets": 3}, {"exercise": "Supinated EZ Bar Curl", "sets": 3}, {"exercise": "Cable Crunch", "sets": 3}], "Day 2": [{"exercise": "Barbell Bench Press", "sets": 3}, {"exercise": "Low to High Cable Flye", "sets": 3}, {"exercise": "Deadlift", "sets": 3}, {"exercise": "Chest-Supported T-Bar Row", "sets": 3}, {"exercise": "Dumbbell Lateral Raise", "sets": 3}, {"exercise": "Tricep Pressdown", "sets": 3}, {"exercise": "Hex Bar / Smith Machine Shrug", "sets": 3}], "Day 3": [{"exercise": "Wide Grip Lat Pulldown", "sets": 3}, {"exercise": "Chest Supported T-Bar Row", "sets": 3}, {"exercise": "Leg Press", "sets": 3}, {"exercise": "Standing Calf Raise", "sets": 4}, {"exercise": "Cable Rope Upright Row", "sets": 3}, {"exercise": "Hammer Curl", "sets": 3}], "Day 4": [{"exercise": "Deadlift", "sets": 3}, {"exercise": "Decline Bench Press", "sets": 3}, {"exercise": "Glute Ham Raise", "sets": 3}, {"exercise": "Leg Extension", "sets": 3}, {"exercise": "Cable Pull-Over", "sets": 3}, {"exercise": "Dumbbell Lateral Raise", "sets": 3}, {"exercise": "Rope Face Pull", "sets": 3}, {"exercise": "EZ Bar Skull Crusher", "sets": 3}], "Day 5": [{"exercise": "Overhead Press", "sets": 4}, {"exercise": "Barbell Bench Press", "sets": 3}, {"exercise": "Cable Seated Row", "sets": 3}, {"exercise": "Seated Hip Abduction", "sets": 3}, {"exercise": "Incline Dumbbell Curl", "sets": 2}, {"exercise": "Bicycle Crunch", "sets": 3}, {"exercise": "Standing Calf Raise", "sets": 4}, {"exercise": "Push-Up", "sets": 2}]}, "Week 10": {"Day 1": [{"exercise": "[AMRAP] Back Squat", "sets": 1}, {"exercise": "Back Squat", "sets": 2}, {"exercise": "Dumbbell Incline Press", "sets": 3}, {"exercise": "Lying Leg Curl", "sets": 3}, {"exercise": "Pronated Pulldown", "sets": 3}, {"exercise": "Supinated EZ Bar Curl", "sets": 3}], "Day 2": [{"exercise": "[AMRAP Prep] Barbell Bench Press", "sets": 3}, {"exercise": "Low to High Cable Flye", "sets": 3}, {"exercise": "Barbell Hip Thrust / Romanian Deadlift", "sets": 3}, {"exercise": "Chest-Supported T-Bar Row", "sets": 3}, {"exercise": "Arnold Press", "sets": 3}, {"exercise": "Tricep Pressdown", "sets": 3}, {"exercise": "Hex Bar / Smith Machine Shrug", "sets": 3}], "Day 3": [{"exercise": "Weighted Pull-Up", "sets": 3}, {"exercise": "Humble Row", "sets": 3}, {"exercise": "Leg Press", "sets": 3}, {"exercise": "Standing Calf Raise", "sets": 4}, {"exercise": "Cable Rope Upright Row", "sets": 3}, {"exercise": "Hammer Curl", "sets": 3}], "Day 4": [{"exercise": "[AMRAP] Deadlift", "sets": 1}, {"exercise": "Deadlift", "sets": 2}, {"exercise": "Decline Bench Press", "sets": 3}, {"exercise": "Glute Ham Raise", "sets": 3}, {"exercise": "Leg Extension", "sets": 3}, {"exercise": "Cable Pull-Over", "sets": 3}, {"exercise": "Dumbbell Lateral Raise", "sets": 3}, {"exercise": "Rope Face Pull", "sets": 3}, {"exercise": "EZ Bar Skull Crusher", "sets": 3}], "Day 5": [{"exercise": "Overhead Press", "sets": 4}, {"exercise": "Egyptian Lateral Raise", "sets": 3}, {"exercise": "Cable Seated Row", "sets": 3}, {"exercise": "Seated Hip Abduction", "sets": 3}, {"exercise": "Incline Dumbbell Curl", "sets": 2}, {"exercise": "Bicycle Crunch", "sets": 3}, {"exercise": "Standing Calf Raise", "sets": 4}, {"exercise": "Push-Up", "sets": 2}]}};
-const STORAGE_KEY = "maxime_jeff_nippard_tracker_v1";
+// ═══════════════════════════════════════════
+// PROGRAM DATA
+// ═══════════════════════════════════════════
+const PROGRAM = {
+  // BLOCK 1 : WEEKS 1-4
+  // Week 1
+  1: {
+    1: { title:"Day 1 — Lower Focused Full Body", exercises:[
+      {name:"Back Squat",warmup:3,sets:4,reps:"4",rpe:"82.5%",rest:"2-4 min",note:"Sit back and down, 15° toe flare, drive knees out laterally"},
+      {name:"Dumbbell Incline Press",warmup:2,sets:3,reps:"8",rpe:"RPE8",rest:"2-3 min",note:"~45° incline, mind muscle connection upper pecs"},
+      {name:"Lying Leg Curl",warmup:1,sets:3,reps:"10",rpe:"RPE6",rest:"1-2 min",note:"Focus on squeezing hamstrings"},
+      {name:"Pronated Pulldown",warmup:1,sets:3,reps:"10",rpe:"RPE7",rest:"2-3 min",note:"Pull elbows down and in"},
+      {name:"Supinated EZ Bar Curl",warmup:1,sets:3,reps:"15/15",rpe:"RPE9",rest:"1-2 min",note:"Dropset: drop ~50% on 2nd 15 reps. 30 total"},
+      {name:"Hanging Leg Raise",warmup:1,sets:3,reps:"12",rpe:"RPE7",rest:"1-2 min",note:"Roll hips up, squeeze lower abs, avoid swinging"},
+    ]},
+    2: { title:"Day 2 — Chest Focused Full Body", exercises:[
+      {name:"Barbell Bench Press",warmup:3,sets:3,reps:"3",rpe:"85%",rest:"2-4 min",note:"Comfortable arch, 1-2s pause on chest, explode off"},
+      {name:"Low to High Cable Flye",warmup:0,sets:3,reps:"15",rpe:"RPE8",rest:"1-2 min",note:"Elbows down and out, pull up and in, slight internal rotation"},
+      {name:"BB Hip Thrust / RDL",warmup:2,sets:3,reps:"12",rpe:"RPE6",rest:"2-3 min",note:"Hip thrust=glutes, RDL=hamstrings priority"},
+      {name:"Chest-Supported T-Bar Row",warmup:1,sets:3,reps:"15",rpe:"RPE6",rest:"1-3 min",note:"Fully protract at bottom, retract at top"},
+      {name:"Arnold Press",warmup:0,sets:3,reps:"10",rpe:"RPE7",rest:"1-3 min",note:"Externally rotate while pressing. Palms in→out"},
+      {name:"Tricep Pressdown",warmup:0,sets:3,reps:"15",rpe:"RPE7",rest:"1-2 min",note:"Focus on squeezing triceps"},
+      {name:"Hex Bar / Smith Shrug",warmup:1,sets:3,reps:"12",rpe:"RPE6",rest:"1-2 min",note:"Shrug up and in, shoulders to ears"},
+    ]},
+    3: { title:"Day 3 — Back Focused Full Body", exercises:[
+      {name:"Weighted Pull-Up",warmup:2,sets:3,reps:"6",rpe:"RPE8",rest:"2-3 min",note:"1.5x shoulder width grip, pull chest to bar"},
+      {name:"Humble Row",warmup:1,sets:3,reps:"10",rpe:"RPE8",rest:"2-3 min",note:"Pin lower chest on top of incline bench"},
+      {name:"Leg Press",warmup:2,sets:3,reps:"15",rpe:"RPE6",rest:"2-3 min",note:"Don't allow lower back to round"},
+      {name:"Standing Calf Raise",warmup:1,sets:4,reps:"8",rpe:"RPE7",rest:"1-2 min",note:"1-2s pause at bottom of each rep"},
+      {name:"Cable Rope Upright Row",warmup:0,sets:3,reps:"10",rpe:"RPE7",rest:"1-2 min",note:"Squeeze upper traps at top"},
+      {name:"Hammer Curl",warmup:0,sets:3,reps:"8",rpe:"RPE9",rest:"1-2 min",note:"3s eccentric. Arch DB out not up, squeeze forearms"},
+    ]},
+    4: { title:"Day 4 — Lower Focused Full Body 2", exercises:[
+      {name:"Deadlift",warmup:3,sets:4,reps:"2",rpe:"85%",rest:"3-5 min",note:"Brace lats, chest tall, hips high, pull slack out"},
+      {name:"Dip",warmup:2,sets:3,reps:"10",rpe:"RPE8",rest:"2-3 min",note:"Elbows 45°, torso forward 15°, scapulae retracted+depressed"},
+      {name:"Glute Ham Raise",warmup:0,sets:3,reps:"10",rpe:"RPE6",rest:"1-2 min",note:"Keep lower back straight, use hamstrings"},
+      {name:"Leg Extension",warmup:1,sets:3,reps:"15",rpe:"RPE7",rest:"1-2 min",note:"Squeeze quads to move the weight"},
+      {name:"Cable Pull-Over",warmup:1,sets:3,reps:"15",rpe:"RPE7",rest:"1-3 min",note:"Torso 45°, pull weight straight down not in"},
+      {name:"DB Lateral Raise",warmup:1,sets:3,reps:"20",rpe:"RPE7",rest:"1-2 min",note:"Raise out not up, mind muscle connection mid delts"},
+      {name:"Rope Face Pull",warmup:1,sets:3,reps:"20",rpe:"RPE7",rest:"1-2 min",note:"Pull elbows up and out, retract scapulae"},
+      {name:"EZ Bar Skull Crusher",warmup:1,sets:3,reps:"15",rpe:"RPE7",rest:"1-2 min",note:"Arc bar back behind head, constant tension"},
+    ]},
+    5: { title:"Day 5 — Deltoid Focused Full Body", exercises:[
+      {name:"Overhead Press",warmup:3,sets:4,reps:"6",rpe:"75%",rest:"2-3 min",note:"Squeeze glutes, clear head, press up and slightly back"},
+      {name:"Egyptian Lateral Raise",warmup:1,sets:3,reps:"8",rpe:"RPE8",rest:"1-2 min",note:"2s eccentric, lean away from cable, squeeze delts"},
+      {name:"Cable Seated Row",warmup:1,sets:3,reps:"12",rpe:"RPE7",rest:"1-3 min",note:"Scapular retraction, pull elbows down and in"},
+      {name:"Seated Hip Abduction",warmup:1,sets:3,reps:"20",rpe:"RPE7",rest:"1-2 min",note:"Drive knees out"},
+      {name:"Incline DB Curl",warmup:1,sets:2,reps:"10",rpe:"RPE8",rest:"1-2 min",note:"45° incline, shoulders back as you curl"},
+      {name:"Bicycle Crunch",warmup:1,sets:3,reps:"15",rpe:"RPE7",rest:"1-2 min",note:"Flex and rotate spine, L elbow to R knee"},
+      {name:"Standing Calf Raise",warmup:1,sets:4,reps:"12",rpe:"RPE7",rest:"1-2 min",note:"Press onto toes"},
+      {name:"Push Up",warmup:0,sets:2,reps:"RPE",rpe:"RPE6",rest:"1-2 min",note:"As many reps as possible to hit target RPE"},
+    ]},
+  },
+  // Week 2
+  2: {
+    1: { title:"Day 1 — Lower Focused Full Body", exercises:[
+      {name:"Back Squat",warmup:3,sets:3,reps:"6",rpe:"77.5%",rest:"2-4 min",note:"Sit back and down, 15° toe flare, drive knees out"},
+      {name:"Dumbbell Incline Press",warmup:2,sets:3,reps:"8",rpe:"RPE8",rest:"2-3 min",note:"~45° incline, mind muscle connection upper pecs"},
+      {name:"Lying Leg Curl",warmup:1,sets:3,reps:"10",rpe:"RPE6",rest:"1-2 min",note:"Squeeze hamstrings"},
+      {name:"Pronated Pulldown",warmup:1,sets:3,reps:"10",rpe:"RPE7",rest:"2-3 min",note:"Pull elbows down and in"},
+      {name:"Supinated EZ Bar Curl",warmup:1,sets:3,reps:"15/15",rpe:"RPE9",rest:"1-2 min",note:"Dropset 30 total"},
+      {name:"Hanging Leg Raise",warmup:1,sets:3,reps:"12",rpe:"RPE7",rest:"1-2 min",note:"Roll hips up, avoid swinging"},
+    ]},
+    2: { title:"Day 2 — Chest Focused Full Body", exercises:[
+      {name:"Barbell Bench Press",warmup:3,sets:3,reps:"5",rpe:"80%",rest:"2-4 min",note:"Comfortable arch, 1-2s pause on chest, explode"},
+      {name:"Low to High Cable Flye",warmup:0,sets:3,reps:"15",rpe:"RPE8",rest:"1-2 min",note:"Flye up and in, palms up at bottom, down at top"},
+      {name:"BB Hip Thrust / RDL",warmup:2,sets:3,reps:"12",rpe:"RPE6",rest:"2-3 min",note:"Mind muscle connection"},
+      {name:"Chest-Supported T-Bar Row",warmup:1,sets:3,reps:"15",rpe:"RPE6",rest:"1-3 min",note:"Protract at bottom, retract at top"},
+      {name:"Arnold Press",warmup:0,sets:3,reps:"10",rpe:"RPE7",rest:"1-3 min",note:"Palms in at bottom, out at top"},
+      {name:"Tricep Pressdown",warmup:0,sets:3,reps:"15",rpe:"RPE7",rest:"1-2 min",note:"Squeeze triceps"},
+      {name:"Hex Bar / Smith Shrug",warmup:1,sets:3,reps:"12",rpe:"RPE6",rest:"1-2 min",note:"Shrug up and in"},
+    ]},
+    3: { title:"Day 3 — Back Focused Full Body", exercises:[
+      {name:"Weighted Pull-Up",warmup:2,sets:3,reps:"6",rpe:"RPE9",rest:"2-3 min",note:"1.5x shoulder width, chest to bar"},
+      {name:"Humble Row",warmup:1,sets:3,reps:"10",rpe:"RPE8",rest:"2-3 min",note:"Pin chest on incline bench"},
+      {name:"Leg Press",warmup:2,sets:3,reps:"15",rpe:"RPE6",rest:"2-3 min",note:"Don't round lower back"},
+      {name:"Standing Calf Raise",warmup:1,sets:4,reps:"8",rpe:"RPE7",rest:"1-2 min",note:"1-2s pause at bottom"},
+      {name:"Cable Rope Upright Row",warmup:0,sets:3,reps:"10",rpe:"RPE7",rest:"1-2 min",note:"Squeeze upper traps at top"},
+      {name:"Hammer Curl",warmup:0,sets:3,reps:"8",rpe:"RPE9",rest:"1-2 min",note:"3s eccentric, arch out not up"},
+    ]},
+    4: { title:"Day 4 — Lower Focused Full Body 2", exercises:[
+      {name:"Reset Deadlift",warmup:3,sets:3,reps:"5",rpe:"80%",rest:"3-5 min",note:"Brace lats, chest tall, hips high, pull slack out"},
+      {name:"Dip",warmup:2,sets:3,reps:"10",rpe:"RPE8",rest:"2-3 min",note:"Elbows 45°, torso 15° forward"},
+      {name:"Glute Ham Raise",warmup:0,sets:3,reps:"10",rpe:"RPE7",rest:"1-2 min",note:"Keep lower back straight"},
+      {name:"Leg Extension",warmup:1,sets:3,reps:"15",rpe:"RPE7",rest:"1-2 min",note:"Squeeze quads"},
+      {name:"Cable Pull-Over",warmup:1,sets:3,reps:"15",rpe:"RPE7",rest:"1-3 min",note:"Torso 45°, pull straight down"},
+      {name:"DB Lateral Raise",warmup:1,sets:3,reps:"20",rpe:"RPE7",rest:"1-2 min",note:"Raise out not up"},
+      {name:"Rope Face Pull",warmup:1,sets:3,reps:"20",rpe:"RPE7",rest:"1-2 min",note:"Elbows up and out, retract scapulae"},
+      {name:"EZ Bar Skull Crusher",warmup:1,sets:3,reps:"15",rpe:"RPE7",rest:"1-2 min",note:"Arc behind head, constant tension"},
+    ]},
+    5: { title:"Day 5 — Deltoid Focused Full Body", exercises:[
+      {name:"Overhead Press",warmup:3,sets:4,reps:"10",rpe:"65%",rest:"2-3 min",note:"Squeeze glutes, press up and slightly back"},
+      {name:"Egyptian Lateral Raise",warmup:1,sets:3,reps:"8",rpe:"RPE8",rest:"1-2 min",note:"2s eccentric, lean away, squeeze delts"},
+      {name:"Cable Seated Row",warmup:1,sets:3,reps:"12",rpe:"RPE7",rest:"1-3 min",note:"Scapular retraction"},
+      {name:"Seated Hip Abduction",warmup:1,sets:3,reps:"20",rpe:"RPE7",rest:"1-2 min",note:"Drive knees out"},
+      {name:"Incline DB Curl",warmup:1,sets:2,reps:"10",rpe:"RPE8",rest:"1-2 min",note:"45° incline, shoulders back"},
+      {name:"Bicycle Crunch",warmup:1,sets:3,reps:"15",rpe:"RPE7",rest:"1-2 min",note:"Flex and rotate spine"},
+      {name:"Standing Calf Raise",warmup:1,sets:4,reps:"12",rpe:"RPE7",rest:"1-2 min",note:"Press onto toes"},
+      {name:"Push Up",warmup:0,sets:2,reps:"RPE",rpe:"RPE6",rest:"1-2 min",note:"AMRAP to target RPE"},
+    ]},
+  },
+  // Week 3
+  3: {
+    1: { title:"Day 1 — Lower Focused Full Body", exercises:[
+      {name:"Back Squat",warmup:3,sets:4,reps:"4",rpe:"85%",rest:"2-4 min",note:"Sit back and down, 15° toe flare, drive knees out"},
+      {name:"Dumbbell Incline Press",warmup:2,sets:3,reps:"8",rpe:"RPE9",rest:"2-3 min",note:"~45° incline, mind muscle connection"},
+      {name:"Lying Leg Curl",warmup:1,sets:3,reps:"10",rpe:"RPE7",rest:"1-2 min",note:"Squeeze hamstrings"},
+      {name:"Pronated Pulldown",warmup:1,sets:3,reps:"10",rpe:"RPE7",rest:"2-3 min",note:"Pull elbows down and in"},
+      {name:"Supinated EZ Bar Curl",warmup:1,sets:3,reps:"15/15",rpe:"RPE10",rest:"1-2 min",note:"Dropset 30 total"},
+      {name:"Hanging Leg Raise",warmup:1,sets:3,reps:"12",rpe:"RPE7",rest:"1-2 min",note:"Roll hips up"},
+    ]},
+    2: { title:"Day 2 — Chest Focused Full Body", exercises:[
+      {name:"Barbell Bench Press",warmup:3,sets:3,reps:"3",rpe:"87.5%",rest:"2-4 min",note:"Arch, 1-2s pause, explode"},
+      {name:"Low to High Cable Flye",warmup:0,sets:3,reps:"15",rpe:"RPE9",rest:"1-2 min",note:"Flye up and in"},
+      {name:"BB Hip Thrust / RDL",warmup:2,sets:3,reps:"12",rpe:"RPE7",rest:"2-3 min",note:"Mind muscle connection"},
+      {name:"Chest-Supported T-Bar Row",warmup:1,sets:3,reps:"15",rpe:"RPE7",rest:"1-3 min",note:"Protract/retract"},
+      {name:"Arnold Press",warmup:0,sets:3,reps:"10",rpe:"RPE7",rest:"1-3 min",note:"Externally rotate while pressing"},
+      {name:"Tricep Pressdown",warmup:0,sets:3,reps:"15",rpe:"RPE7",rest:"1-2 min",note:"Squeeze triceps"},
+      {name:"Hex Bar / Smith Shrug",warmup:1,sets:3,reps:"12",rpe:"RPE7",rest:"1-2 min",note:"Shrug up and in"},
+    ]},
+    3: { title:"Day 3 — Back Focused Full Body", exercises:[
+      {name:"Weighted Pull-Up",warmup:2,sets:3,reps:"6",rpe:"RPE9",rest:"2-3 min",note:"1.5x shoulder width, chest to bar"},
+      {name:"Humble Row",warmup:1,sets:3,reps:"10",rpe:"RPE9",rest:"2-3 min",note:"Pin chest on incline bench"},
+      {name:"Leg Press",warmup:2,sets:3,reps:"15",rpe:"RPE7",rest:"2-3 min",note:"Don't round lower back"},
+      {name:"Standing Calf Raise",warmup:1,sets:4,reps:"8",rpe:"RPE7",rest:"1-2 min",note:"1-2s pause at bottom"},
+      {name:"Cable Rope Upright Row",warmup:0,sets:3,reps:"10",rpe:"RPE7",rest:"1-2 min",note:"Squeeze upper traps"},
+      {name:"Hammer Curl",warmup:0,sets:3,reps:"8",rpe:"RPE9",rest:"1-2 min",note:"3s eccentric"},
+    ]},
+    4: { title:"Day 4 — Lower Focused Full Body 2", exercises:[
+      {name:"Deadlift",warmup:3,sets:4,reps:"2",rpe:"87.5%",rest:"3-5 min",note:"Brace lats, chest tall, hips high"},
+      {name:"Dip",warmup:2,sets:3,reps:"10",rpe:"RPE9",rest:"2-3 min",note:"Elbows 45°, torso 15° forward"},
+      {name:"Glute Ham Raise",warmup:0,sets:3,reps:"10",rpe:"RPE7",rest:"1-2 min",note:"Keep lower back straight"},
+      {name:"Leg Extension",warmup:1,sets:3,reps:"15",rpe:"RPE7",rest:"1-2 min",note:"Squeeze quads"},
+      {name:"Cable Pull-Over",warmup:1,sets:3,reps:"15",rpe:"RPE7",rest:"1-3 min",note:"Pull straight down"},
+      {name:"DB Lateral Raise",warmup:1,sets:3,reps:"20",rpe:"RPE7",rest:"1-2 min",note:"Raise out not up"},
+      {name:"Rope Face Pull",warmup:1,sets:3,reps:"20",rpe:"RPE7",rest:"1-2 min",note:"Elbows up and out"},
+      {name:"EZ Bar Skull Crusher",warmup:1,sets:3,reps:"15",rpe:"RPE7",rest:"1-2 min",note:"Arc behind head"},
+    ]},
+    5: { title:"Day 5 — Deltoid Focused Full Body", exercises:[
+      {name:"Overhead Press",warmup:3,sets:4,reps:"6",rpe:"77.5%",rest:"2-3 min",note:"Press up and slightly back"},
+      {name:"Egyptian Lateral Raise",warmup:1,sets:3,reps:"8",rpe:"RPE9",rest:"1-2 min",note:"2s eccentric, lean away"},
+      {name:"Cable Seated Row",warmup:1,sets:3,reps:"12",rpe:"RPE7",rest:"1-3 min",note:"Scapular retraction"},
+      {name:"Seated Hip Abduction",warmup:1,sets:3,reps:"20",rpe:"RPE7",rest:"1-2 min",note:"Drive knees out"},
+      {name:"Incline DB Curl",warmup:1,sets:2,reps:"10",rpe:"RPE7",rest:"1-2 min",note:"45° incline"},
+      {name:"Bicycle Crunch",warmup:1,sets:3,reps:"15",rpe:"RPE7",rest:"1-2 min",note:"Flex and rotate spine"},
+      {name:"Standing Calf Raise",warmup:1,sets:4,reps:"12",rpe:"RPE7",rest:"1-2 min",note:"Press onto toes"},
+      {name:"Push Up",warmup:0,sets:2,reps:"RPE",rpe:"RPE7",rest:"1-2 min",note:"AMRAP to target RPE"},
+    ]},
+  },
+  // Week 4
+  4: {
+    1: { title:"Day 1 — Lower Focused Full Body", exercises:[
+      {name:"Back Squat",warmup:3,sets:3,reps:"6",rpe:"80%",rest:"2-4 min",note:"Sit back and down, knees out"},
+      {name:"Dumbbell Incline Press",warmup:2,sets:3,reps:"8",rpe:"RPE9",rest:"2-3 min",note:"~45° incline"},
+      {name:"Lying Leg Curl",warmup:1,sets:3,reps:"10",rpe:"RPE8",rest:"1-2 min",note:"Squeeze hamstrings"},
+      {name:"Pronated Pulldown",warmup:1,sets:3,reps:"10",rpe:"RPE8",rest:"2-3 min",note:"Elbows down and in"},
+      {name:"Supinated EZ Bar Curl",warmup:1,sets:3,reps:"15/15",rpe:"RPE10",rest:"1-2 min",note:"Dropset 30 total"},
+      {name:"Hanging Leg Raise",warmup:1,sets:3,reps:"12",rpe:"RPE8",rest:"1-2 min",note:"Roll hips up"},
+    ]},
+    2: { title:"Day 2 — Chest Focused Full Body", exercises:[
+      {name:"Barbell Bench Press",warmup:3,sets:3,reps:"5",rpe:"82.5%",rest:"2-4 min",note:"Arch, pause, explode"},
+      {name:"Low to High Cable Flye",warmup:0,sets:3,reps:"15",rpe:"RPE9",rest:"1-2 min",note:"Flye up and in"},
+      {name:"BB Hip Thrust / RDL",warmup:2,sets:3,reps:"12",rpe:"RPE8",rest:"2-3 min",note:"Mind muscle connection"},
+      {name:"Chest-Supported T-Bar Row",warmup:1,sets:3,reps:"15",rpe:"RPE8",rest:"1-3 min",note:"Protract/retract"},
+      {name:"Arnold Press",warmup:0,sets:3,reps:"10",rpe:"RPE8",rest:"1-3 min",note:"Externally rotate"},
+      {name:"Tricep Pressdown",warmup:0,sets:3,reps:"15",rpe:"RPE8",rest:"1-2 min",note:"Squeeze triceps"},
+      {name:"Hex Bar / Smith Shrug",warmup:1,sets:3,reps:"12",rpe:"RPE8",rest:"1-2 min",note:"Shrug up and in"},
+    ]},
+    3: { title:"Day 3 — Back Focused Full Body", exercises:[
+      {name:"Weighted Pull-Up",warmup:2,sets:3,reps:"6",rpe:"RPE9",rest:"2-3 min",note:"Chest to bar"},
+      {name:"Humble Row",warmup:1,sets:3,reps:"10",rpe:"RPE9",rest:"2-3 min",note:"Pin chest on incline"},
+      {name:"Leg Press",warmup:2,sets:3,reps:"15",rpe:"RPE8",rest:"2-3 min",note:"Don't round lower back"},
+      {name:"Standing Calf Raise",warmup:1,sets:4,reps:"8",rpe:"RPE8",rest:"1-2 min",note:"1-2s pause at bottom"},
+      {name:"Cable Rope Upright Row",warmup:0,sets:3,reps:"10",rpe:"RPE8",rest:"1-2 min",note:"Squeeze upper traps"},
+      {name:"Hammer Curl",warmup:0,sets:3,reps:"8",rpe:"RPE9",rest:"1-2 min",note:"3s eccentric"},
+    ]},
+    4: { title:"Day 4 — Lower Focused Full Body 2", exercises:[
+      {name:"Reset Deadlift",warmup:3,sets:3,reps:"5",rpe:"82.5%",rest:"3-5 min",note:"Brace lats, chest tall"},
+      {name:"Dip",warmup:2,sets:3,reps:"10",rpe:"RPE9",rest:"2-3 min",note:"Elbows 45°, torso forward"},
+      {name:"Glute Ham Raise",warmup:0,sets:3,reps:"10",rpe:"RPE8",rest:"1-2 min",note:"Lower back straight"},
+      {name:"Leg Extension",warmup:1,sets:3,reps:"15",rpe:"RPE8",rest:"1-2 min",note:"Squeeze quads"},
+      {name:"Cable Pull-Over",warmup:1,sets:3,reps:"15",rpe:"RPE8",rest:"1-3 min",note:"Pull straight down"},
+      {name:"DB Lateral Raise",warmup:1,sets:3,reps:"20",rpe:"RPE8",rest:"1-2 min",note:"Raise out not up"},
+      {name:"Rope Face Pull",warmup:1,sets:3,reps:"20",rpe:"RPE8",rest:"1-2 min",note:"Elbows up and out"},
+      {name:"EZ Bar Skull Crusher",warmup:1,sets:3,reps:"15",rpe:"RPE8",rest:"1-2 min",note:"Arc behind head"},
+    ]},
+    5: { title:"Day 5 — Deltoid Focused Full Body", exercises:[
+      {name:"Overhead Press",warmup:3,sets:4,reps:"10",rpe:"67.5%",rest:"2-3 min",note:"Press up and slightly back"},
+      {name:"Egyptian Lateral Raise",warmup:1,sets:3,reps:"8",rpe:"RPE9",rest:"1-2 min",note:"2s eccentric"},
+      {name:"Cable Seated Row",warmup:1,sets:3,reps:"12",rpe:"RPE8",rest:"1-3 min",note:"Scapular retraction"},
+      {name:"Seated Hip Abduction",warmup:1,sets:3,reps:"20",rpe:"RPE8",rest:"1-2 min",note:"Drive knees out"},
+      {name:"Incline DB Curl",warmup:1,sets:2,reps:"10",rpe:"RPE8",rest:"1-2 min",note:"45° incline"},
+      {name:"Bicycle Crunch",warmup:1,sets:3,reps:"15",rpe:"RPE8",rest:"1-2 min",note:"Flex and rotate spine"},
+      {name:"Standing Calf Raise",warmup:1,sets:4,reps:"12",rpe:"RPE8",rest:"1-2 min",note:"Press onto toes"},
+      {name:"Push Up",warmup:0,sets:2,reps:"RPE",rpe:"RPE8",rest:"1-2 min",note:"AMRAP to target RPE"},
+    ]},
+  },
+  // BLOCK 2 : WEEKS 5-8
+  5: {
+    1: { title:"Day 1 — Lower Focused Full Body", exercises:[
+      {name:"[Top] Back Squat",warmup:3,sets:1,reps:"3-5",rpe:"87.5%",rest:"2-4 min",note:"Go for 5 if strong, 3-4 if less confident"},
+      {name:"[Back Off] Back Squat",warmup:0,sets:2,reps:"5",rpe:"82.5%",rest:"2-4 min",note:"Sit back and down, knees out"},
+      {name:"BB Overhead Press",warmup:2,sets:4,reps:"6",rpe:"80%",rest:"2-3 min",note:"Squeeze glutes, press up and slightly back"},
+      {name:"Swiss Ball Leg Curl",warmup:1,sets:3,reps:"10",rpe:"RPE7",rest:"1-2 min",note:"Hips off ground, heels into ball"},
+      {name:"Chin-Up",warmup:1,sets:4,reps:"8",rpe:"RPE7",rest:"2-3 min",note:"1.5x shoulder width, chest to bar"},
+      {name:"Supinated EZ Bar Curl",warmup:1,sets:3,reps:"10+2",rpe:"RPE10",rest:"1-2 min",note:"10 controlled + 2 with momentum"},
+      {name:"Ab Wheel Rollout",warmup:1,sets:3,reps:"6",rpe:"RPE7",rest:"1-2 min",note:"Squeeze glutes, don't pull from arms"},
+    ]},
+    2: { title:"Day 2 — Chest Focused Full Body", exercises:[
+      {name:"Barbell Bench Press",warmup:3,sets:3,reps:"3",rpe:"87.5%",rest:"2-4 min",note:"Elbows 45°, scapulae retracted+depressed"},
+      {name:"Low Incline DB Press",warmup:0,sets:3,reps:"15",rpe:"RPE8",rest:"1-2 min",note:"15° bench angle, tuck elbows"},
+      {name:"BB Hip Thrust / RDL",warmup:2,sets:4,reps:"12",rpe:"RPE7",rest:"2-3 min",note:"Mind muscle connection"},
+      {name:"Dumbbell Row",warmup:1,sets:4,reps:"12",rpe:"RPE7",rest:"1-3 min",note:"Pull DB to hip"},
+      {name:"DB Lateral Raise",warmup:0,sets:4,reps:"15",rpe:"RPE7",rest:"1-3 min",note:"Tilt pinky up first"},
+      {name:"Overhead Tricep Extension",warmup:0,sets:3,reps:"15",rpe:"RPE7",rest:"1-2 min",note:"Squeeze triceps"},
+      {name:"Hex Bar / Smith Shrug",warmup:1,sets:3,reps:"12",rpe:"RPE7",rest:"1-2 min",note:"Shrug up and in"},
+    ]},
+    3: { title:"Day 3 — Back Focused Full Body", exercises:[
+      {name:"Weighted Pull-Up",warmup:2,sets:3,reps:"6",rpe:"RPE9",rest:"2-3 min",note:"Chest to bar"},
+      {name:"Banded CS T-Bar Row",warmup:1,sets:4,reps:"10",rpe:"RPE8",rest:"2-3 min",note:"Be explosive at bottom, drive elbows back"},
+      {name:"Single-Leg Leg Press",warmup:2,sets:4,reps:"15",rpe:"RPE7",rest:"2-3 min",note:"Don't round lower back"},
+      {name:"Eccentric Calf Raise",warmup:1,sets:4,reps:"8",rpe:"RPE7",rest:"1-2 min",note:"4s eccentric"},
+      {name:"Cable Rope Upright Row",warmup:0,sets:4,reps:"10",rpe:"RPE7",rest:"1-2 min",note:"Squeeze upper traps"},
+      {name:"Cable Single-Arm Curl",warmup:0,sets:4,reps:"8",rpe:"RPE7",rest:"1-2 min",note:"Elbow behind torso (hyperextended)"},
+    ]},
+    4: { title:"Day 4 — Lower Focused Full Body 2", exercises:[
+      {name:"[Top] Deadlift",warmup:3,sets:1,reps:"2",rpe:"90%",rest:"3-5 min",note:"Brace lats, chest tall, hips high"},
+      {name:"[Back Off] Reset DL",warmup:0,sets:3,reps:"2",rpe:"80%",rest:"3-5 min",note:"Pull slack out before lifting"},
+      {name:"Decline Bench Press",warmup:2,sets:4,reps:"8",rpe:"RPE7",rest:"2-3 min",note:"Constant tension, touch bar to chest"},
+      {name:"Glute Ham Raise",warmup:0,sets:4,reps:"10",rpe:"RPE7",rest:"1-2 min",note:"Lower back straight"},
+      {name:"Leg Extension",warmup:1,sets:4,reps:"12",rpe:"RPE7",rest:"1-2 min",note:"Squeeze quads"},
+      {name:"Cable Pull-Over",warmup:1,sets:3,reps:"15",rpe:"RPE7",rest:"1-3 min",note:"Pull straight down"},
+      {name:"DB Lateral Raise",warmup:1,sets:3,reps:"20",rpe:"RPE7",rest:"1-2 min",note:"Raise out not up"},
+      {name:"EZ Bar Skull Crusher",warmup:1,sets:3,reps:"15",rpe:"RPE7",rest:"1-2 min",note:"Arc behind head"},
+    ]},
+    5: { title:"Day 5 — Deltoid Focused Full Body", exercises:[
+      {name:"Overhead Press",warmup:3,sets:3,reps:"8",rpe:"80%",rest:"2-3 min",note:"Press up and slightly back"},
+      {name:"Cable Lateral Raise",warmup:1,sets:3,reps:"8",rpe:"RPE8",rest:"1-2 min",note:"Swing out not up"},
+      {name:"Pendlay Row",warmup:1,sets:4,reps:"10",rpe:"RPE7",rest:"1-3 min",note:"Flat back, elbows 45°"},
+      {name:"Seated Hip Abduction",warmup:1,sets:4,reps:"20",rpe:"RPE7",rest:"1-2 min",note:"Drive knees out"},
+      {name:"EZ Bar Curl 21s",warmup:1,sets:2,reps:"7/7/7",rpe:"RPE7",rest:"1-2 min",note:"7 bottom half, 7 top half, 7 full ROM"},
+      {name:"Cable Crunch",warmup:1,sets:4,reps:"15",rpe:"RPE7",rest:"1-2 min",note:"Flex spine, don't yank arms"},
+      {name:"Standing Calf Raise",warmup:1,sets:4,reps:"12",rpe:"RPE7",rest:"1-2 min",note:"1-2s pause at bottom"},
+      {name:"Push Up",warmup:0,sets:2,reps:"RPE",rpe:"RPE7",rest:"1-2 min",note:"AMRAP to target RPE"},
+    ]},
+  },
+  6: {
+    1: { title:"Day 1 — Lower Focused Full Body", exercises:[
+      {name:"[Top] Back Squat",warmup:3,sets:1,reps:"2",rpe:"92.5%",rest:"2-4 min",note:"Sit back and down, knees out"},
+      {name:"[Back Off] Back Squat",warmup:0,sets:2,reps:"3",rpe:"85%",rest:"2-4 min",note:"Same cues"},
+      {name:"BB Overhead Press",warmup:2,sets:4,reps:"8",rpe:"75%",rest:"2-3 min",note:"Press up and slightly back"},
+      {name:"Swiss Ball Leg Curl",warmup:1,sets:3,reps:"10",rpe:"RPE7",rest:"1-2 min",note:"Hips off ground"},
+      {name:"Chin-Up",warmup:1,sets:4,reps:"8",rpe:"RPE7",rest:"2-3 min",note:"Supinated grip, pull with lats"},
+      {name:"Supinated EZ Bar Curl",warmup:1,sets:3,reps:"10+2",rpe:"RPE10",rest:"1-2 min",note:"10 controlled + 2 cheat"},
+      {name:"Ab Wheel Rollout",warmup:1,sets:3,reps:"12",rpe:"RPE7",rest:"1-2 min",note:"Squeeze glutes"},
+    ]},
+    2: { title:"Day 2 — Chest Focused Full Body", exercises:[
+      {name:"Barbell Bench Press",warmup:3,sets:3,reps:"5",rpe:"85%",rest:"2-4 min",note:"Elbows 45°, scapulae retracted"},
+      {name:"Low Incline DB Press",warmup:0,sets:3,reps:"15",rpe:"RPE8",rest:"1-2 min",note:"15° angle, tuck elbows"},
+      {name:"BB Hip Thrust / RDL",warmup:2,sets:4,reps:"12",rpe:"RPE7",rest:"2-3 min",note:"Mind muscle connection"},
+      {name:"Dumbbell Row",warmup:1,sets:4,reps:"12",rpe:"RPE7",rest:"1-3 min",note:"Pull DB to hip"},
+      {name:"DB Lateral Raise",warmup:0,sets:4,reps:"15",rpe:"RPE7",rest:"1-3 min",note:"Raise out not up"},
+      {name:"Overhead Tricep Extension",warmup:0,sets:3,reps:"15",rpe:"RPE7",rest:"1-2 min",note:"Squeeze triceps"},
+      {name:"Hex Bar / Smith Shrug",warmup:1,sets:3,reps:"12",rpe:"RPE7",rest:"1-2 min",note:"Shrug up and in"},
+    ]},
+    3: { title:"Day 3 — Back Focused Full Body", exercises:[
+      {name:"Weighted Pull-Up",warmup:2,sets:4,reps:"3",rpe:"RPE9",rest:"2-3 min",note:"Chest to bar"},
+      {name:"Banded CS T-Bar Row",warmup:1,sets:4,reps:"10",rpe:"RPE8",rest:"2-3 min",note:"Explosive at bottom"},
+      {name:"Single-Leg Leg Press",warmup:2,sets:4,reps:"15",rpe:"RPE7",rest:"2-3 min",note:"Don't round lower back"},
+      {name:"Eccentric Calf Raise",warmup:1,sets:4,reps:"8",rpe:"RPE7",rest:"1-2 min",note:"4s eccentric"},
+      {name:"Cable Rope Upright Row",warmup:0,sets:4,reps:"10",rpe:"RPE7",rest:"1-2 min",note:"Squeeze upper traps"},
+      {name:"Cable Single-Arm Curl",warmup:0,sets:4,reps:"8",rpe:"RPE7",rest:"1-2 min",note:"Elbow behind torso"},
+    ]},
+    4: { title:"Day 4 — Lower Focused Full Body 2", exercises:[
+      {name:"[Top] Deadlift",warmup:3,sets:1,reps:"4",rpe:"85%",rest:"3-5 min",note:"Brace lats, chest tall"},
+      {name:"[Back Off] Reset DL",warmup:0,sets:3,reps:"4",rpe:"75%",rest:"3-5 min",note:"Pull slack out"},
+      {name:"Decline Bench Press",warmup:2,sets:4,reps:"8",rpe:"RPE7",rest:"2-3 min",note:"Constant tension"},
+      {name:"Glute Ham Raise",warmup:0,sets:4,reps:"10",rpe:"RPE7",rest:"1-2 min",note:"Lower back straight"},
+      {name:"Leg Extension",warmup:1,sets:4,reps:"12",rpe:"RPE7",rest:"1-2 min",note:"Squeeze quads"},
+      {name:"Cable Pull-Over",warmup:1,sets:3,reps:"15",rpe:"RPE7",rest:"1-3 min",note:"Pull straight down"},
+      {name:"DB Lateral Raise",warmup:1,sets:3,reps:"20",rpe:"RPE7",rest:"1-2 min",note:"Raise out not up"},
+      {name:"Reverse Pec Deck",warmup:1,sets:3,reps:"20",rpe:"RPE7",rest:"1-2 min",note:"Swing out not back"},
+      {name:"EZ Bar Skull Crusher",warmup:1,sets:3,reps:"15",rpe:"RPE7",rest:"1-2 min",note:"Arc behind head"},
+    ]},
+    5: { title:"Day 5 — Deltoid Focused Full Body", exercises:[
+      {name:"Overhead Press",warmup:3,sets:4,reps:"4",rpe:"82.5%",rest:"2-3 min",note:"Press up and slightly back"},
+      {name:"Cable Lateral Raise",warmup:1,sets:3,reps:"8",rpe:"RPE8",rest:"1-2 min",note:"Swing out not up"},
+      {name:"Pendlay Row",warmup:1,sets:4,reps:"12",rpe:"RPE7",rest:"1-3 min",note:"Flat back, elbows 45°"},
+      {name:"Seated Hip Abduction",warmup:1,sets:4,reps:"20",rpe:"RPE7",rest:"1-2 min",note:"Drive knees out"},
+      {name:"EZ Bar Curl 21s",warmup:1,sets:2,reps:"7/7/7",rpe:"RPE7",rest:"1-2 min",note:"7 bottom, 7 top, 7 full"},
+      {name:"Cable Crunch",warmup:1,sets:4,reps:"15",rpe:"RPE7",rest:"1-2 min",note:"Flex spine"},
+      {name:"Standing Calf Raise",warmup:1,sets:4,reps:"12",rpe:"RPE7",rest:"1-2 min",note:"1-2s pause at bottom"},
+      {name:"Push Up",warmup:0,sets:2,reps:"RPE",rpe:"RPE7",rest:"1-2 min",note:"AMRAP to target RPE"},
+    ]},
+  },
+  7: {
+    1: { title:"Day 1 — Lower Focused Full Body", exercises:[
+      {name:"[Top] Back Squat",warmup:3,sets:1,reps:"6-8",rpe:"82.5%",rest:"2-4 min",note:"Sit back and down, knees out"},
+      {name:"[Back Off] Back Squat",warmup:0,sets:2,reps:"8",rpe:"70%",rest:"2-4 min",note:"Same cues"},
+      {name:"BB Overhead Press",warmup:2,sets:4,reps:"10",rpe:"65%",rest:"2-3 min",note:"Press up and slightly back"},
+      {name:"Swiss Ball Leg Curl",warmup:1,sets:3,reps:"10",rpe:"RPE8",rest:"1-2 min",note:"Hips off ground"},
+      {name:"Chin-Up",warmup:1,sets:4,reps:"8",rpe:"RPE8",rest:"2-3 min",note:"Supinated grip, pull with lats"},
+      {name:"Supinated EZ Bar Curl",warmup:1,sets:3,reps:"10+2",rpe:"RPE10",rest:"1-2 min",note:"10+2 cheat"},
+      {name:"Ab Wheel Rollout",warmup:1,sets:3,reps:"12",rpe:"RPE8",rest:"1-2 min",note:"Squeeze glutes"},
+    ]},
+    2: { title:"Day 2 — Chest Focused Full Body", exercises:[
+      {name:"Barbell Bench Press",warmup:3,sets:3,reps:"10",rpe:"77.5%",rest:"2-4 min",note:"Elbows 45°, scapulae retracted"},
+      {name:"Low Incline DB Press",warmup:0,sets:3,reps:"15",rpe:"RPE8",rest:"1-2 min",note:"15° angle"},
+      {name:"BB Hip Thrust / RDL",warmup:2,sets:4,reps:"12",rpe:"RPE8",rest:"2-3 min",note:"Mind muscle connection"},
+      {name:"Dumbbell Row",warmup:1,sets:4,reps:"12",rpe:"RPE8",rest:"1-3 min",note:"Pull to hip"},
+      {name:"DB Lateral Raise",warmup:0,sets:4,reps:"15",rpe:"RPE8",rest:"1-3 min",note:"Raise out not up"},
+      {name:"Overhead Tricep Extension",warmup:0,sets:3,reps:"15",rpe:"RPE8",rest:"1-2 min",note:"Squeeze triceps"},
+      {name:"Hex Bar / Smith Shrug",warmup:1,sets:3,reps:"12",rpe:"RPE8",rest:"1-2 min",note:"Shrug up and in"},
+    ]},
+    3: { title:"Day 3 — Back Focused Full Body", exercises:[
+      {name:"Weighted Pull-Up",warmup:2,sets:3,reps:"10",rpe:"RPE9",rest:"2-3 min",note:"Chest to bar"},
+      {name:"Banded CS T-Bar Row",warmup:1,sets:4,reps:"10",rpe:"RPE8",rest:"2-3 min",note:"Explosive at bottom"},
+      {name:"Single-Leg Leg Press",warmup:2,sets:4,reps:"15",rpe:"RPE8",rest:"2-3 min",note:"Don't round lower back"},
+      {name:"Eccentric Calf Raise",warmup:1,sets:4,reps:"8",rpe:"RPE8",rest:"1-2 min",note:"4s eccentric"},
+      {name:"Cable Rope Upright Row",warmup:0,sets:4,reps:"10",rpe:"RPE8",rest:"1-2 min",note:"Squeeze upper traps"},
+      {name:"Cable Single-Arm Curl",warmup:0,sets:4,reps:"8",rpe:"RPE8",rest:"1-2 min",note:"Elbow behind torso"},
+    ]},
+    4: { title:"Day 4 — Lower Focused Full Body 2", exercises:[
+      {name:"[Top] Deadlift",warmup:3,sets:1,reps:"6",rpe:"82.5%",rest:"3-5 min",note:"Brace lats, chest tall"},
+      {name:"[Back Off] Reset DL",warmup:0,sets:3,reps:"6",rpe:"70%",rest:"3-5 min",note:"Pull slack out"},
+      {name:"Decline Bench Press",warmup:2,sets:4,reps:"8",rpe:"RPE7",rest:"2-3 min",note:"Constant tension"},
+      {name:"Glute Ham Raise",warmup:0,sets:4,reps:"10",rpe:"RPE8",rest:"1-2 min",note:"Lower back straight"},
+      {name:"Leg Extension",warmup:1,sets:4,reps:"12",rpe:"RPE8",rest:"1-2 min",note:"Squeeze quads"},
+      {name:"Cable Pull-Over",warmup:1,sets:3,reps:"15",rpe:"RPE8",rest:"1-3 min",note:"Pull straight down"},
+      {name:"DB Lateral Raise",warmup:1,sets:3,reps:"20",rpe:"RPE8",rest:"1-2 min",note:"Raise out not up"},
+      {name:"Reverse Pec Deck",warmup:1,sets:3,reps:"20",rpe:"RPE8",rest:"1-2 min",note:"Swing out not back"},
+      {name:"EZ Bar Skull Crusher",warmup:1,sets:3,reps:"15",rpe:"RPE8",rest:"1-2 min",note:"Arc behind head"},
+    ]},
+    5: { title:"Day 5 — Deltoid Focused Full Body", exercises:[
+      {name:"Overhead Press",warmup:3,sets:4,reps:"6",rpe:"80%",rest:"2-3 min",note:"Press up and slightly back"},
+      {name:"Cable Lateral Raise",warmup:1,sets:3,reps:"8",rpe:"RPE8",rest:"1-2 min",note:"Swing out not up"},
+      {name:"Pendlay Row",warmup:1,sets:4,reps:"12",rpe:"RPE8",rest:"1-3 min",note:"Flat back"},
+      {name:"Seated Hip Abduction",warmup:1,sets:4,reps:"20",rpe:"RPE8",rest:"1-2 min",note:"Drive knees out"},
+      {name:"EZ Bar Curl 21s",warmup:1,sets:2,reps:"7/7/7",rpe:"RPE8",rest:"1-2 min",note:"7 bottom, 7 top, 7 full"},
+      {name:"Cable Crunch",warmup:1,sets:4,reps:"15",rpe:"RPE8",rest:"1-2 min",note:"Flex spine"},
+      {name:"Standing Calf Raise",warmup:1,sets:4,reps:"12",rpe:"RPE8",rest:"1-2 min",note:"1-2s pause at bottom"},
+      {name:"Push Up",warmup:0,sets:2,reps:"RPE",rpe:"RPE7",rest:"1-2 min",note:"AMRAP to target RPE"},
+    ]},
+  },
+  8: {
+    1: { title:"Day 1 — Lower Focused Full Body", exercises:[
+      {name:"[Top] Back Squat",warmup:3,sets:1,reps:"2",rpe:"92.5%",rest:"2-4 min",note:"Knees out, brace hard"},
+      {name:"[Back Off] Back Squat",warmup:0,sets:2,reps:"2",rpe:"85%",rest:"2-4 min",note:"Same cues"},
+      {name:"BB Overhead Press",warmup:2,sets:4,reps:"5",rpe:"80%",rest:"2-3 min",note:"Press up and slightly back"},
+      {name:"Swiss Ball Leg Curl",warmup:1,sets:3,reps:"10",rpe:"RPE8",rest:"1-2 min",note:"Hips off ground"},
+      {name:"Chin-Up",warmup:1,sets:4,reps:"8",rpe:"RPE8",rest:"2-3 min",note:"Pull with lats"},
+      {name:"Supinated EZ Bar Curl",warmup:1,sets:3,reps:"10+2",rpe:"RPE10",rest:"1-2 min",note:"10+2 cheat"},
+      {name:"Ab Wheel Rollout",warmup:1,sets:3,reps:"12",rpe:"RPE8",rest:"1-2 min",note:"Squeeze glutes"},
+    ]},
+    2: { title:"Day 2 — Chest Focused Full Body", exercises:[
+      {name:"Barbell Bench Press",warmup:3,sets:4,reps:"2",rpe:"90%",rest:"2-4 min",note:"Elbows 45°, scapulae retracted"},
+      {name:"Low Incline DB Press",warmup:0,sets:3,reps:"15",rpe:"RPE8",rest:"1-2 min",note:"15° angle"},
+      {name:"BB Hip Thrust / RDL",warmup:2,sets:4,reps:"12",rpe:"RPE8",rest:"2-3 min",note:"Mind muscle connection"},
+      {name:"Dumbbell Row",warmup:1,sets:4,reps:"12",rpe:"RPE8",rest:"1-3 min",note:"Pull to hip"},
+      {name:"DB Lateral Raise",warmup:0,sets:4,reps:"15",rpe:"RPE8",rest:"1-3 min",note:"Raise out not up"},
+      {name:"Overhead Tricep Extension",warmup:0,sets:3,reps:"15",rpe:"RPE8",rest:"1-2 min",note:"Squeeze triceps"},
+      {name:"Hex Bar / Smith Shrug",warmup:1,sets:3,reps:"12",rpe:"RPE8",rest:"1-2 min",note:"Shrug up and in"},
+    ]},
+    3: { title:"Day 3 — Back Focused Full Body", exercises:[
+      {name:"Weighted Pull-Up",warmup:2,sets:4,reps:"6",rpe:"RPE9",rest:"2-3 min",note:"Chest to bar"},
+      {name:"Banded CS T-Bar Row",warmup:1,sets:4,reps:"10",rpe:"RPE8",rest:"2-3 min",note:"Explosive at bottom"},
+      {name:"Single-Leg Leg Press",warmup:2,sets:4,reps:"15",rpe:"RPE8",rest:"2-3 min",note:"Don't round lower back"},
+      {name:"Eccentric Calf Raise",warmup:1,sets:4,reps:"8",rpe:"RPE8",rest:"1-2 min",note:"4s eccentric"},
+      {name:"Cable Rope Upright Row",warmup:0,sets:4,reps:"10",rpe:"RPE8",rest:"1-2 min",note:"Squeeze upper traps"},
+      {name:"Cable Single-Arm Curl",warmup:0,sets:4,reps:"8",rpe:"RPE8",rest:"1-2 min",note:"Elbow behind torso"},
+    ]},
+    4: { title:"Day 4 — Lower Focused Full Body 2", exercises:[
+      {name:"[Top] Deadlift",warmup:3,sets:1,reps:"2",rpe:"95%",rest:"3-5 min",note:"Brace lats, chest tall"},
+      {name:"[Back Off] Reset DL",warmup:0,sets:1,reps:"3",rpe:"85%",rest:"3-5 min",note:"Pull slack out"},
+      {name:"Decline Bench Press",warmup:2,sets:4,reps:"8",rpe:"RPE8",rest:"2-3 min",note:"Constant tension"},
+      {name:"Glute Ham Raise",warmup:0,sets:4,reps:"10",rpe:"RPE8",rest:"1-2 min",note:"Lower back straight"},
+      {name:"Leg Extension",warmup:1,sets:4,reps:"12",rpe:"RPE8",rest:"1-2 min",note:"Squeeze quads"},
+      {name:"Cable Pull-Over",warmup:1,sets:3,reps:"15",rpe:"RPE8",rest:"1-3 min",note:"Pull straight down"},
+      {name:"DB Lateral Raise",warmup:1,sets:3,reps:"20",rpe:"RPE8",rest:"1-2 min",note:"Raise out not up"},
+      {name:"Reverse Pec Deck",warmup:1,sets:3,reps:"20",rpe:"RPE8",rest:"1-2 min",note:"Swing out not back"},
+      {name:"EZ Bar Skull Crusher",warmup:1,sets:3,reps:"15",rpe:"RPE8",rest:"1-2 min",note:"Arc behind head"},
+    ]},
+    5: { title:"Day 5 — Deltoid Focused Full Body", exercises:[
+      {name:"Overhead Press",warmup:3,sets:5,reps:"3",rpe:"87.5%",rest:"2-3 min",note:"Press up and slightly back"},
+      {name:"Cable Lateral Raise",warmup:1,sets:3,reps:"8",rpe:"RPE8",rest:"1-2 min",note:"Swing out not up"},
+      {name:"Pendlay Row",warmup:1,sets:4,reps:"12",rpe:"RPE8",rest:"1-3 min",note:"Flat back"},
+      {name:"Seated Hip Abduction",warmup:1,sets:4,reps:"20",rpe:"RPE8",rest:"1-2 min",note:"Drive knees out"},
+      {name:"EZ Bar Curl 21s",warmup:1,sets:2,reps:"7/7/7",rpe:"RPE8",rest:"1-2 min",note:"7 bottom, 7 top, 7 full"},
+      {name:"Cable Crunch",warmup:1,sets:4,reps:"15",rpe:"RPE8",rest:"1-2 min",note:"Flex spine"},
+      {name:"Standing Calf Raise",warmup:1,sets:4,reps:"12",rpe:"RPE8",rest:"1-2 min",note:"1-2s pause at bottom"},
+      {name:"Push Up",warmup:0,sets:2,reps:"RPE",rpe:"RPE7",rest:"1-2 min",note:"AMRAP to target RPE"},
+    ]},
+  },
+  // Week 9 DELOAD
+  9: {
+    1: { title:"Day 1 — Lower Focused (Deload)", exercises:[
+      {name:"Back Squat",warmup:3,sets:4,reps:"4",rpe:"75%",rest:"2-4 min",note:"Sit back and down, knees out"},
+      {name:"Barbell Bench Press",warmup:2,sets:3,reps:"4",rpe:"70%",rest:"2-3 min",note:"Speed reps — explosive off chest"},
+      {name:"Lying Leg Curl",warmup:1,sets:3,reps:"10",rpe:"RPE6",rest:"1-2 min",note:"Squeeze hamstrings"},
+      {name:"Pronated Pulldown",warmup:1,sets:3,reps:"10",rpe:"RPE6",rest:"2-3 min",note:"Pull elbows down and in"},
+      {name:"Supinated EZ Bar Curl",warmup:1,sets:3,reps:"10",rpe:"RPE6",rest:"1-2 min",note:"Press pinky harder than pointer"},
+      {name:"Cable Crunch",warmup:1,sets:3,reps:"12",rpe:"RPE6",rest:"1-2 min",note:"Flex lower back"},
+    ]},
+    2: { title:"Day 2 — Chest Focused (Deload)", exercises:[
+      {name:"Barbell Bench Press",warmup:3,sets:3,reps:"3",rpe:"80%",rest:"2-4 min",note:"Elbows 45°, scapulae retracted"},
+      {name:"Low to High Cable Flye",warmup:0,sets:3,reps:"15",rpe:"RPE6",rest:"1-2 min",note:"Flye up and in"},
+      {name:"Deadlift",warmup:2,sets:3,reps:"3",rpe:"75%",rest:"2-3 min",note:"Explosive reps — should feel light and fast"},
+      {name:"Chest-Supported T-Bar Row",warmup:1,sets:3,reps:"15",rpe:"RPE6",rest:"1-3 min",note:"Protract/retract"},
+      {name:"DB Lateral Raise",warmup:0,sets:3,reps:"10",rpe:"RPE6",rest:"1-3 min",note:"Raise out not up"},
+      {name:"Tricep Pressdown",warmup:0,sets:3,reps:"15",rpe:"RPE6",rest:"1-2 min",note:"Squeeze triceps"},
+      {name:"Hex Bar / Smith Shrug",warmup:1,sets:3,reps:"12",rpe:"RPE6",rest:"1-2 min",note:"Shrug up and in"},
+    ]},
+    3: { title:"Day 3 — Back Focused (Deload)", exercises:[
+      {name:"Wide Grip Lat Pulldown",warmup:2,sets:3,reps:"6",rpe:"RPE6",rest:"2-3 min",note:"Pull chest to bar"},
+      {name:"Chest Supported T-Bar Row",warmup:1,sets:3,reps:"10",rpe:"RPE6",rest:"2-3 min",note:"Retraction, transverse abduction"},
+      {name:"Leg Press",warmup:2,sets:3,reps:"12",rpe:"RPE6",rest:"2-3 min",note:"Don't round lower back"},
+      {name:"Standing Calf Raise",warmup:1,sets:4,reps:"8",rpe:"RPE6",rest:"1-2 min",note:"1-2s pause at bottom"},
+      {name:"Cable Rope Upright Row",warmup:0,sets:3,reps:"10",rpe:"RPE6",rest:"1-2 min",note:"Squeeze upper traps"},
+      {name:"Hammer Curl",warmup:0,sets:3,reps:"8",rpe:"RPE6",rest:"1-2 min",note:"3s eccentric"},
+    ]},
+    4: { title:"Day 4 — Lower Focused (Deload)", exercises:[
+      {name:"Deadlift",warmup:3,sets:3,reps:"2",rpe:"80%",rest:"3-5 min",note:"Brace lats, chest tall"},
+      {name:"Decline Bench Press",warmup:2,sets:3,reps:"8",rpe:"RPE7",rest:"2-3 min",note:"Constant tension"},
+      {name:"Glute Ham Raise",warmup:0,sets:3,reps:"10",rpe:"RPE6",rest:"1-2 min",note:"Lower back straight"},
+      {name:"Leg Extension",warmup:1,sets:3,reps:"15",rpe:"RPE6",rest:"1-2 min",note:"Squeeze quads"},
+      {name:"Cable Pull-Over",warmup:1,sets:3,reps:"15",rpe:"RPE6",rest:"1-3 min",note:"Pull straight down"},
+      {name:"DB Lateral Raise",warmup:1,sets:3,reps:"20",rpe:"RPE6",rest:"1-2 min",note:"Raise out not up"},
+      {name:"Rope Face Pull",warmup:1,sets:3,reps:"20",rpe:"RPE6",rest:"1-2 min",note:"Elbows up and out"},
+      {name:"EZ Bar Skull Crusher",warmup:1,sets:3,reps:"15",rpe:"RPE6",rest:"1-2 min",note:"Arc behind head"},
+    ]},
+    5: { title:"Day 5 — Deltoid Focused (Deload)", exercises:[
+      {name:"Overhead Press",warmup:3,sets:4,reps:"6",rpe:"75%",rest:"2-3 min",note:"Press up and slightly back"},
+      {name:"Barbell Bench Press",warmup:1,sets:3,reps:"2",rpe:"85%",rest:"1-2 min",note:"Practice setup & explosive technique for AMRAP next week"},
+      {name:"Cable Seated Row",warmup:1,sets:3,reps:"12",rpe:"RPE6",rest:"1-3 min",note:"Scapular retraction"},
+      {name:"Seated Hip Abduction",warmup:1,sets:3,reps:"20",rpe:"RPE6",rest:"1-2 min",note:"Drive knees out"},
+      {name:"Incline DB Curl",warmup:1,sets:2,reps:"10",rpe:"RPE6",rest:"1-2 min",note:"45° incline"},
+      {name:"Bicycle Crunch",warmup:1,sets:3,reps:"15",rpe:"RPE6",rest:"1-2 min",note:"Flex and rotate spine"},
+      {name:"Standing Calf Raise",warmup:1,sets:4,reps:"12",rpe:"RPE6",rest:"1-2 min",note:"1-2s pause at bottom"},
+      {name:"Push Up",warmup:0,sets:2,reps:"RPE",rpe:"RPE7",rest:"1-2 min",note:"AMRAP to target RPE"},
+    ]},
+  },
+  // Week 10 AMRAPS
+  10: {
+    1: { title:"Day 1 — Lower Focused (AMRAPs)", exercises:[
+      {name:"⭐ AMRAP Back Squat",warmup:3,sets:1,reps:"AMRAP",rpe:"90%",rest:"2-4 min",note:"As many reps as possible — use a spotter!"},
+      {name:"Back Squat",warmup:0,sets:2,reps:"6",rpe:"80%",rest:"2-4 min",note:"Sit back and down, knees out"},
+      {name:"Dumbbell Incline Press",warmup:2,sets:3,reps:"8",rpe:"RPE5",rest:"2-3 min",note:"Very light — avoid interference with bench AMRAP tomorrow"},
+      {name:"Lying Leg Curl",warmup:1,sets:3,reps:"10",rpe:"RPE8",rest:"1-2 min",note:"Squeeze hamstrings"},
+      {name:"Pronated Pulldown",warmup:1,sets:3,reps:"10",rpe:"RPE8",rest:"2-3 min",note:"Pull elbows down and in"},
+      {name:"Supinated EZ Bar Curl",warmup:1,sets:3,reps:"10",rpe:"RPE9",rest:"1-2 min",note:"Dropset"},
+      {name:"Cable Crunch",warmup:1,sets:3,reps:"12",rpe:"RPE6",rest:"1-2 min",note:"Flex spine"},
+    ]},
+    2: { title:"Day 2 — Chest Focused (AMRAPs)", exercises:[
+      {name:"⭐ AMRAP Bench Press",warmup:3,sets:1,reps:"AMRAP",rpe:"92.5%",rest:"2-4 min",note:"As many reps as possible — use a spotter!"},
+      {name:"Barbell Bench Press",warmup:0,sets:2,reps:"5",rpe:"85%",rest:"2-4 min",note:"Elbows 45°, scapulae retracted"},
+      {name:"Low to High Cable Flye",warmup:0,sets:3,reps:"15",rpe:"RPE9",rest:"1-2 min",note:"Flye up and in"},
+      {name:"BB Hip Thrust / RDL",warmup:2,sets:3,reps:"12",rpe:"RPE5",rest:"2-3 min",note:"Very light — avoid interference with DL AMRAP Day 4"},
+      {name:"Chest-Supported T-Bar Row",warmup:1,sets:3,reps:"15",rpe:"RPE8",rest:"1-3 min",note:"Protract/retract"},
+      {name:"Arnold Press",warmup:0,sets:3,reps:"10",rpe:"RPE8",rest:"1-3 min",note:"Externally rotate"},
+      {name:"Tricep Pressdown",warmup:0,sets:3,reps:"15",rpe:"RPE9",rest:"1-2 min",note:"Squeeze triceps"},
+      {name:"Hex Bar / Smith Shrug",warmup:1,sets:3,reps:"12",rpe:"RPE10",rest:"1-2 min",note:"Shrug up and in"},
+    ]},
+    3: { title:"Day 3 — Back Focused (AMRAPs)", exercises:[
+      {name:"Weighted Pull-Up",warmup:2,sets:3,reps:"6",rpe:"RPE9",rest:"2-3 min",note:"Chest to bar"},
+      {name:"Humble Row",warmup:1,sets:3,reps:"10",rpe:"RPE8",rest:"2-3 min",note:"Pin chest on incline bench"},
+      {name:"Leg Press",warmup:2,sets:3,reps:"15",rpe:"RPE8",rest:"2-3 min",note:"Don't round lower back"},
+      {name:"Standing Calf Raise",warmup:1,sets:4,reps:"8",rpe:"RPE8",rest:"1-2 min",note:"1-2s pause at bottom"},
+      {name:"Cable Rope Upright Row",warmup:0,sets:3,reps:"10",rpe:"RPE8",rest:"1-2 min",note:"Squeeze upper traps"},
+      {name:"Hammer Curl",warmup:0,sets:3,reps:"8",rpe:"RPE10",rest:"1-2 min",note:"3s eccentric"},
+    ]},
+    4: { title:"Day 4 — Lower Focused (AMRAPs)", exercises:[
+      {name:"⭐ AMRAP Deadlift",warmup:3,sets:1,reps:"AMRAP",rpe:"90%",rest:"3-5 min",note:"As many reps as possible — good technique!"},
+      {name:"Deadlift",warmup:0,sets:2,reps:"5",rpe:"85%",rest:"3-5 min",note:"Brace lats, chest tall"},
+      {name:"Decline Bench Press",warmup:2,sets:3,reps:"8",rpe:"RPE7",rest:"2-3 min",note:"Constant tension"},
+      {name:"Glute Ham Raise",warmup:0,sets:3,reps:"10",rpe:"RPE8",rest:"1-2 min",note:"Lower back straight"},
+      {name:"Leg Extension",warmup:1,sets:3,reps:"15",rpe:"RPE8",rest:"1-2 min",note:"Squeeze quads"},
+      {name:"Cable Pull-Over",warmup:1,sets:3,reps:"15",rpe:"RPE8",rest:"1-3 min",note:"Pull straight down"},
+      {name:"DB Lateral Raise",warmup:1,sets:3,reps:"20",rpe:"RPE8",rest:"1-2 min",note:"Raise out not up"},
+      {name:"Rope Face Pull",warmup:1,sets:3,reps:"20",rpe:"RPE8",rest:"1-2 min",note:"Elbows up and out"},
+      {name:"EZ Bar Skull Crusher",warmup:1,sets:3,reps:"15",rpe:"RPE8",rest:"1-2 min",note:"Arc behind head"},
+    ]},
+    5: { title:"Day 5 — Deltoid Focused (AMRAPs)", exercises:[
+      {name:"Overhead Press",warmup:3,sets:4,reps:"10",rpe:"80%",rest:"2-3 min",note:"Press up and slightly back"},
+      {name:"Egyptian Lateral Raise",warmup:1,sets:3,reps:"8",rpe:"RPE9",rest:"1-2 min",note:"2s eccentric"},
+      {name:"Cable Seated Row",warmup:1,sets:3,reps:"12",rpe:"RPE8",rest:"1-3 min",note:"Scapular retraction"},
+      {name:"Seated Hip Abduction",warmup:1,sets:3,reps:"20",rpe:"RPE8",rest:"1-2 min",note:"Drive knees out"},
+      {name:"Incline DB Curl",warmup:1,sets:2,reps:"10",rpe:"RPE10",rest:"1-2 min",note:"45° incline"},
+      {name:"Bicycle Crunch",warmup:1,sets:3,reps:"15",rpe:"RPE8",rest:"1-2 min",note:"Flex and rotate spine"},
+      {name:"Standing Calf Raise",warmup:1,sets:4,reps:"12",rpe:"RPE8",rest:"1-2 min",note:"Press onto toes"},
+      {name:"Push Up",warmup:0,sets:2,reps:"RPE",rpe:"RPE7",rest:"1-2 min",note:"AMRAP to target RPE"},
+    ]},
+  },
+};
 
-function loadStore() {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return {};
-  try { return JSON.parse(raw); } catch (e) { return {}; }
+const WEEK_LABELS = {
+  1:"S1 · B1",2:"S2 · B1",3:"S3 · B1",4:"S4 · B1",
+  5:"S5 · B2",6:"S6 · B2",7:"S7 · B2",8:"S8 · B2",
+  9:"S9 · Deload",10:"S10 · AMRAP"
+};
+const DAY_LABELS = {1:"Jour 1",2:"Jour 2",3:"Jour 3",4:"Jour 4",5:"Jour 5"};
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let currentWeek = 1, currentDay = 1;
+let timerSeconds = 120, timerRunning = false, timerInterval = null, timerRemaining = 120;
+let timerVisible = false;
+
+// ═══════════════════════════════════════════
+// STORAGE
+// ═══════════════════════════════════════════
+function saveData(key,val){ try{localStorage.setItem('nip_'+key,JSON.stringify(val))}catch(e){} }
+function loadData(key,def){ try{const v=localStorage.getItem('nip_'+key);return v?JSON.parse(v):def}catch(e){return def} }
+function getSetKey(w,d,exIdx,setIdx,field){ return `w${w}d${d}e${exIdx}s${setIdx}${field}`; }
+function getDayDoneKey(w,d){ return `done_w${w}d${d}`; }
+
+// ═══════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════
+function renderWeekSelector(){
+  const c=document.getElementById('weekSelector');
+  c.innerHTML='';
+  for(let w=1;w<=10;w++){
+    const btn=document.createElement('button');
+    btn.className='sel-btn'+(w===currentWeek?' active':'');
+    // Check if all days done
+    let allDone=true;
+    for(let d=1;d<=5;d++) if(!loadData(getDayDoneKey(w,d),false)){allDone=false;break;}
+    if(allDone) btn.classList.add('done');
+    btn.textContent=WEEK_LABELS[w];
+    btn.onclick=()=>{currentWeek=w;currentDay=1;renderAll();};
+    c.appendChild(btn);
+  }
 }
-function saveStore(store) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
-}
-let store = loadStore();
-let currentWeek = Object.keys(PROGRAM)[0];
-let currentDay = Object.keys(PROGRAM[currentWeek])[0];
 
-const weekSelect = document.getElementById("weekSelect");
-const dayTabs = document.getElementById("dayTabs");
-const app = document.getElementById("app");
-
-function getEntryKey(week, day, exIdx) {
-  return `${week}|||${day}|||${exIdx}`;
-}
-
-function initSelectors() {
-  weekSelect.innerHTML = "";
-  Object.keys(PROGRAM).forEach(week => {
-    const opt = document.createElement("option");
-    opt.value = week;
-    opt.textContent = week;
-    weekSelect.appendChild(opt);
-  });
-  weekSelect.value = currentWeek;
-  weekSelect.addEventListener("change", () => {
-    currentWeek = weekSelect.value;
-    currentDay = Object.keys(PROGRAM[currentWeek])[0];
-    render();
-  });
+function renderDaySelector(){
+  const c=document.getElementById('daySelector');
+  c.innerHTML='';
+  for(let d=1;d<=5;d++){
+    const btn=document.createElement('button');
+    btn.className='sel-btn'+(d===currentDay?' active':'');
+    if(loadData(getDayDoneKey(currentWeek,d),false)) btn.classList.add('done');
+    btn.textContent=DAY_LABELS[d];
+    btn.onclick=()=>{currentDay=d;renderExercises();updateProgress();renderDaySelector();updateDayCompleteBtn();};
+    c.appendChild(btn);
+  }
 }
 
-function renderTabs() {
-  dayTabs.innerHTML = "";
-  Object.keys(PROGRAM[currentWeek]).forEach(day => {
-    const btn = document.createElement("button");
-    btn.textContent = day;
-    if (day === currentDay) btn.classList.add("active");
-    btn.addEventListener("click", () => {
-      currentDay = day;
-      render();
-    });
-    dayTabs.appendChild(btn);
-  });
-}
+function renderExercises(){
+  const c=document.getElementById('exerciseList');
+  c.innerHTML='';
+  const day=PROGRAM[currentWeek][currentDay];
+  if(!day)return;
+  document.getElementById('weekLabel').textContent=day.title;
 
-function renderCards() {
-  app.innerHTML = "";
-  const items = PROGRAM[currentWeek][currentDay];
-  document.getElementById("statWeek").textContent = currentWeek;
-  document.getElementById("statDay").textContent = currentDay;
-  document.getElementById("statCount").textContent = items.length;
+  day.exercises.forEach((ex,exIdx)=>{
+    const card=document.createElement('div');
+    card.className='ex-card';
+    card.id='ex-'+exIdx;
 
-  items.forEach((item, exIdx) => {
-    const key = getEntryKey(currentWeek, currentDay, exIdx);
-    if (!store[key]) store[key] = {weights: Array(5).fill(""), notes:""};
-
-    const card = document.createElement("div");
-    card.className = "card";
-
-    const head = document.createElement("div");
-    head.className = "exercise-head";
-    head.innerHTML = `<div class="exercise-title">${item.exercise}</div><div class="badge">${item.sets} série${item.sets > 1 ? "s" : ""}</div>`;
-    card.appendChild(head);
-
-    const grid = document.createElement("div");
-    grid.className = "set-grid";
-
-    for (let i = 0; i < item.sets; i++) {
-      const box = document.createElement("div");
-      box.className = "set-box";
-      const value = store[key].weights[i] || "";
-      box.innerHTML = `<label>Série ${i+1}</label><input inputmode="decimal" placeholder="kg" value="${value}">`;
-      const input = box.querySelector("input");
-      input.addEventListener("input", (e) => {
-        store[key].weights[i] = e.target.value;
-        saveStore(store);
-      });
-      grid.appendChild(box);
+    // Check if all sets done
+    let allSetsDone=true;
+    for(let s=0;s<ex.sets;s++){
+      if(!loadData(getSetKey(currentWeek,currentDay,exIdx,s,'done'),false)){allSetsDone=false;break;}
     }
-    card.appendChild(grid);
+    if(allSetsDone) card.classList.add('completed');
 
-    const notes = document.createElement("textarea");
-    notes.className = "notes";
-    notes.placeholder = "Notes optionnelles";
-    notes.value = store[key].notes || "";
-    notes.addEventListener("input", e => {
-      store[key].notes = e.target.value;
-      saveStore(store);
-    });
-    card.appendChild(notes);
+    // Header
+    const header=document.createElement('div');
+    header.className='ex-header';
+    header.onclick=()=>{ card.classList.toggle('open'); };
 
-    app.appendChild(card);
+    header.innerHTML=`
+      <div class="ex-num">${exIdx+1}</div>
+      <div class="ex-info">
+        <div class="ex-name">${ex.name}</div>
+        <div class="ex-meta">
+          <span class="ex-tag tag-sets">${ex.sets} séries</span>
+          <span class="ex-tag tag-reps">×${ex.reps}</span>
+          <span class="ex-tag tag-rpe">${ex.rpe}</span>
+          <span class="ex-tag tag-rest">⏱ ${ex.rest}</span>
+        </div>
+      </div>
+    `;
+    card.appendChild(header);
+
+    // Note
+    const note=document.createElement('div');
+    note.className='ex-note';
+    note.textContent=ex.note;
+    card.appendChild(note);
+
+    // Sets
+    const setsArea=document.createElement('div');
+    setsArea.className='sets-area';
+
+    const setsHeader=document.createElement('div');
+    setsHeader.className='sets-header';
+    setsHeader.innerHTML='<span>Set</span><span>Charge (kg)</span><span>Reps</span><span>✓</span>';
+    setsArea.appendChild(setsHeader);
+
+    for(let s=0;s<ex.sets;s++){
+      const row=document.createElement('div');
+      row.className='set-row';
+
+      const label=document.createElement('div');
+      label.className='set-label';
+      label.textContent=`${s+1}`;
+
+      const weightInput=document.createElement('input');
+      weightInput.type='number';
+      weightInput.inputMode='decimal';
+      weightInput.className='set-input';
+      weightInput.placeholder='kg';
+      weightInput.value=loadData(getSetKey(currentWeek,currentDay,exIdx,s,'w'),'');
+      weightInput.onchange=function(){ saveData(getSetKey(currentWeek,currentDay,exIdx,s,'w'),this.value); };
+
+      const repsInput=document.createElement('input');
+      repsInput.type='text';
+      repsInput.inputMode='numeric';
+      repsInput.className='set-input';
+      repsInput.placeholder=ex.reps;
+      repsInput.value=loadData(getSetKey(currentWeek,currentDay,exIdx,s,'r'),'');
+      repsInput.onchange=function(){ saveData(getSetKey(currentWeek,currentDay,exIdx,s,'r'),this.value); };
+
+      const check=document.createElement('button');
+      check.className='set-check';
+      if(loadData(getSetKey(currentWeek,currentDay,exIdx,s,'done'),false)) check.classList.add('done');
+      check.textContent='✓';
+      check.onclick=function(){
+        const isDone=this.classList.toggle('done');
+        saveData(getSetKey(currentWeek,currentDay,exIdx,s,'done'),isDone);
+        checkExComplete(card,ex,exIdx);
+        updateProgress();
+        if(isDone) autoStartTimer(ex.rest);
+      };
+
+      row.appendChild(label);
+      row.appendChild(weightInput);
+      row.appendChild(repsInput);
+      row.appendChild(check);
+      setsArea.appendChild(row);
+    }
+    card.appendChild(setsArea);
+    c.appendChild(card);
   });
-  saveStore(store);
 }
 
-function render() {
-  weekSelect.value = currentWeek;
-  renderTabs();
-  renderCards();
+function checkExComplete(card,ex,exIdx){
+  let allDone=true;
+  for(let s=0;s<ex.sets;s++){
+    if(!loadData(getSetKey(currentWeek,currentDay,exIdx,s,'done'),false)){allDone=false;break;}
+  }
+  if(allDone) card.classList.add('completed');
+  else card.classList.remove('completed');
 }
 
-document.getElementById("resetWeekBtn").addEventListener("click", () => {
-  if (!confirm(`Effacer toutes les données de ${currentWeek} ?`)) return;
-  Object.keys(store).forEach(k => {
-    if (k.startsWith(currentWeek + "|||")) delete store[k];
+function updateProgress(){
+  const day=PROGRAM[currentWeek][currentDay];
+  if(!day)return;
+  let total=0,done=0;
+  day.exercises.forEach((ex,exIdx)=>{
+    total+=ex.sets;
+    for(let s=0;s<ex.sets;s++){
+      if(loadData(getSetKey(currentWeek,currentDay,exIdx,s,'done'),false)) done++;
+    }
   });
-  saveStore(store);
-  render();
-});
+  const pct=total?Math.round(done/total*100):0;
+  document.getElementById('progressBar').style.width=pct+'%';
+  document.getElementById('progressText').textContent=`${done} / ${total} séries`;
+}
 
-document.getElementById("exportBtn").addEventListener("click", () => {
-  const blob = new Blob([JSON.stringify(store, null, 2)], {type:"application/json"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "jeff_nippard_tracker_data.json";
-  a.click();
-  URL.revokeObjectURL(a.href);
-});
+function updateDayCompleteBtn(){
+  const btn=document.getElementById('dayCompleteBtn');
+  const isDone=loadData(getDayDoneKey(currentWeek,currentDay),false);
+  btn.classList.toggle('is-done',isDone);
+  btn.textContent=isDone?'Jour terminé ✓':'Marquer jour terminé ✓';
+}
 
-document.getElementById("importBtn").addEventListener("click", () => {
-  document.getElementById("importFile").click();
-});
+function toggleDayComplete(){
+  const key=getDayDoneKey(currentWeek,currentDay);
+  const newVal=!loadData(key,false);
+  saveData(key,newVal);
+  updateDayCompleteBtn();
+  renderWeekSelector();
+  renderDaySelector();
+}
 
-document.getElementById("importFile").addEventListener("change", async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const text = await file.text();
-  try {
-    const imported = JSON.parse(text);
-    store = imported || {};
-    saveStore(store);
-    render();
-    alert("Import terminé.");
-  } catch {
-    alert("Fichier invalide.");
-  }
-});
+function renderAll(){
+  renderWeekSelector();
+  renderDaySelector();
+  renderExercises();
+  updateProgress();
+  updateDayCompleteBtn();
+}
 
-document.getElementById("copySummaryBtn").addEventListener("click", async () => {
-  const items = PROGRAM[currentWeek][currentDay];
-  const lines = [`${currentWeek} - ${currentDay}`];
-  items.forEach((item, exIdx) => {
-    const key = getEntryKey(currentWeek, currentDay, exIdx);
-    const vals = (store[key]?.weights || []).slice(0, item.sets).filter(v => String(v).trim() !== "");
-    const note = store[key]?.notes?.trim();
-    lines.push(`- ${item.exercise} (${item.sets} séries) : ${vals.join(" / ") || "vide"}${note ? " | Note: " + note : ""}`);
+// ═══════════════════════════════════════════
+// TIMER
+// ═══════════════════════════════════════════
+function toggleTimer(){
+  timerVisible=!timerVisible;
+  document.getElementById('timerBar').classList.toggle('visible',timerVisible);
+  document.getElementById('timerFab').style.display=timerVisible?'none':'flex';
+}
+
+function formatTime(s){
+  const m=Math.floor(s/60);
+  const sec=s%60;
+  return m+':'+(sec<10?'0':'')+sec;
+}
+
+function updateTimerDisplay(){
+  const d=document.getElementById('timerDisplay');
+  d.textContent=formatTime(timerRemaining);
+  d.classList.toggle('done-color',timerRemaining===0&&!timerRunning);
+}
+
+function setTimer(seconds){
+  timerSeconds=seconds;
+  timerRemaining=seconds;
+  clearInterval(timerInterval);
+  timerRunning=false;
+  document.getElementById('timerStartBtn').textContent='Start';
+  document.getElementById('timerStartBtn').className='timer-btn btn-start';
+  updateTimerDisplay();
+  document.querySelectorAll('.preset-btn').forEach(b=>{
+    b.classList.toggle('active',parseInt(b.textContent.split(':')[0])*60+parseInt(b.textContent.split(':')[1])===seconds);
   });
-  try {
-    await navigator.clipboard.writeText(lines.join("\n"));
-    alert("Résumé copié.");
-  } catch {
-    alert("Impossible de copier automatiquement sur cet appareil.");
-  }
-});
+}
 
-initSelectors();
-render();
+function startTimer(){
+  if(timerRunning){
+    clearInterval(timerInterval);
+    timerRunning=false;
+    document.getElementById('timerStartBtn').textContent='Start';
+    document.getElementById('timerStartBtn').className='timer-btn btn-start';
+    return;
+  }
+  if(timerRemaining<=0) timerRemaining=timerSeconds;
+  timerRunning=true;
+  document.getElementById('timerStartBtn').textContent='Pause';
+  document.getElementById('timerStartBtn').className='timer-btn btn-stop';
+  timerInterval=setInterval(()=>{
+    timerRemaining--;
+    updateTimerDisplay();
+    if(timerRemaining<=0){
+      clearInterval(timerInterval);
+      timerRunning=false;
+      document.getElementById('timerStartBtn').textContent='Start';
+      document.getElementById('timerStartBtn').className='timer-btn btn-start';
+      // Vibrate
+      if(navigator.vibrate) navigator.vibrate([200,100,200,100,200]);
+      // Audio beep
+      try{
+        const ctx=new(window.AudioContext||window.webkitAudioContext)();
+        [0,.25,.5].forEach(t=>{
+          const o=ctx.createOscillator();
+          const g=ctx.createGain();
+          o.connect(g); g.connect(ctx.destination);
+          o.frequency.value=880;
+          g.gain.value=0.3;
+          o.start(ctx.currentTime+t);
+          o.stop(ctx.currentTime+t+0.15);
+        });
+      }catch(e){}
+      updateTimerDisplay();
+    }
+  },1000);
+}
+
+function resetTimer(){
+  clearInterval(timerInterval);
+  timerRunning=false;
+  timerRemaining=timerSeconds;
+  document.getElementById('timerStartBtn').textContent='Start';
+  document.getElementById('timerStartBtn').className='timer-btn btn-start';
+  updateTimerDisplay();
+}
+
+function autoStartTimer(restStr){
+  // Parse rest time and auto-start
+  const match=restStr.match(/(\d+)/);
+  if(match){
+    const mins=parseInt(match[1]);
+    setTimer(mins*60);
+    timerRemaining=mins*60;
+    if(!timerVisible) toggleTimer();
+    // Auto start after a tiny delay
+    setTimeout(()=>{
+      if(!timerRunning) startTimer();
+    },300);
+  }
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+renderAll();
+updateTimerDisplay();
 </script>
 </body>
 </html>
